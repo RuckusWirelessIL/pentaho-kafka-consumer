@@ -1,4 +1,9 @@
 pentaho-kafka-consumer
 ======================
 
-Apache Kafka Consumer Plug-In for Pentaho
+Apache Kafka consumer step plug-in for Pentaho Kettle.
+
+
+=== Building ===
+
+mvn clean package
