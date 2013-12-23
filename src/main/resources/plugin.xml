@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin
+	id="KafkaConsumer"
+	iconfile="logo.png"
+	description="Apache Kafka Consumer"
+	tooltip="This plug-in allows reading messages from a specific topic in a Kafka stream"
+	category="Input"
+	classname="com.ruckuswireless.pentaho.KafkaConsumerMeta">
+	
+	<libraries>
+		<library name="kafka-consumer.jar"/>
+	</libraries>
+    
+	<localized_category>
+		<category locale="en_US">Input</category>
+	</localized_category>
+	<localized_description>
+		<description locale="en_US">Apache Kafka Consumer</description>
+	</localized_description>
+	<localized_tooltip>
+		<tooltip locale="en_US">This plug-in allows reading messages from a specific topic in a Kafka stream</tooltip>
+	</localized_tooltip>
+</plugin>
