@@ -95,6 +95,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 	public void stopRunning(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
 
 		KafkaConsumerData data = (KafkaConsumerData) sdi;
+		data.consumer.shutdown();
 		data.canceled = true;
 
 		super.stopRunning(smi, sdi);
