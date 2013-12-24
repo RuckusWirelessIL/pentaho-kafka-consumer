@@ -12,8 +12,12 @@ import org.pentaho.di.core.Const;
 import org.pentaho.di.core.Counter;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.row.RowMetaInterface;
+import org.pentaho.di.core.row.ValueMeta;
+import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
@@ -28,16 +32,20 @@ import org.w3c.dom.Node;
 
 public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface {
 
-	private static final String[] KAFKA_PROPERTIES_NAMES = new String[] { "auto.commit.enable", "group.id",
-			"zookeeper.connect", "consumer.id", "socket.timeout.ms", "socket.receive.buffer.bytes",
-			"fetch.message.max.bytes", "auto.commit.interval.ms", "queued.max.message.chunks", "rebalance.max.retries",
-			"fetch.min.bytes", "fetch.wait.max.ms", "rebalance.backoff.ms", "refresh.leader.backoff.ms",
+	public static final String[] KAFKA_PROPERTIES_NAMES = new String[] { "group.id", "zookeeper.connect",
+			"consumer.id", "socket.timeout.ms", "socket.receive.buffer.bytes", "fetch.message.max.bytes",
+			"auto.commit.interval.ms", "queued.max.message.chunks", "rebalance.max.retries", "fetch.min.bytes",
+			"fetch.wait.max.ms", "rebalance.backoff.ms", "refresh.leader.backoff.ms", "auto.commit.enable",
 			"auto.offset.reset", "consumer.timeout.ms", "client.id", "zookeeper.session.timeout.ms",
 			"zookeeper.connection.timeout.ms", "zookeeper.sync.time.ms" };
 
 	private Properties kafkaProperties = new Properties();
 	private String topic;
 	private String field;
+
+	Properties getKafkaProperties() {
+		return kafkaProperties;
+	}
 
 	public String getTopic() {
 		return topic;
@@ -83,7 +91,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	}
 
 	public StepDataInterface getStepData() {
-		return null;
+		return new KafkaConsumerData();
 	}
 
 	public void loadXML(Node stepnode, List<DatabaseMeta> databases, Map<String, Counter> counters)
@@ -92,7 +100,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		try {
 			topic = XMLHandler.getTagValue(stepnode, "TOPIC");
 			field = XMLHandler.getTagValue(stepnode, "FIELD");
-			Node kafkaNode = XMLHandler.getSubNode(stepnode, getXmlCode("KAFKA"));
+			Node kafkaNode = XMLHandler.getSubNode(stepnode, "KAFKA");
 			for (String name : KAFKA_PROPERTIES_NAMES) {
 				String value = XMLHandler.getTagValue(kafkaNode, name);
 				if (value != null) {
@@ -112,14 +120,14 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		if (field != null) {
 			retval.append("    ").append(XMLHandler.addTagValue("FIELD", field));
 		}
-		retval.append("    ").append(XMLHandler.openTag(getXmlCode("KAFKA"))).append(Const.CR);
+		retval.append("    ").append(XMLHandler.openTag("KAFKA")).append(Const.CR);
 		for (String name : KAFKA_PROPERTIES_NAMES) {
 			String value = kafkaProperties.getProperty(name);
 			if (value != null) {
-				retval.append("    " + XMLHandler.addTagValue(name, value));
+				retval.append("      " + XMLHandler.addTagValue(name, value));
 			}
 		}
-		retval.append("    ").append(XMLHandler.closeTag(getXmlCode("FIELDS"))).append(Const.CR);
+		retval.append("    ").append(XMLHandler.closeTag("KAFKA")).append(Const.CR);
 		return retval.toString();
 	}
 
@@ -159,5 +167,12 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	}
 
 	public void setDefault() {
+	}
+
+	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
+			VariableSpace space) throws KettleStepException {
+		rowMeta.clear();
+		ValueMetaInterface valueMeta = new ValueMeta(field, ValueMetaInterface.TYPE_BINARY);
+		rowMeta.addValueMeta(valueMeta);
 	}
 }

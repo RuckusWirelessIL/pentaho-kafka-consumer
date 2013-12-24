@@ -8,7 +8,24 @@
 	classname="com.ruckuswireless.pentaho.KafkaConsumerMeta">
 	
 	<libraries>
-		<library name="kafka-consumer.jar"/>
+		<library name="pentaho-kafka-consumer.jar"/>
+		<library name="lib/activation-1.1.jar"/>
+		<library name="lib/jline-0.9.94.jar"/>
+		<library name="lib/jopt-simple-3.2.jar"/>
+		<library name="lib/junit-3.8.1.jar"/>
+		<library name="lib/kafka_2.10-0.8.0.jar"/>
+		<library name="lib/log4j-1.2.15.jar"/>
+		<library name="lib/mail-1.4.jar"/>
+		<library name="lib/metrics-annotation-2.2.0.jar"/>
+		<library name="lib/metrics-core-2.2.0.jar"/>
+		<library name="lib/scala-compiler-2.10.1.jar"/>
+		<library name="lib/scala-library-2.10.1.jar"/>
+		<library name="lib/scala-reflect-2.10.1.jar"/>
+		<library name="lib/slf4j-api-1.6.4.jar"/>
+		<library name="lib/slf4j-simple-1.6.4.jar"/>
+		<library name="lib/snappy-java-1.0.4.1.jar"/>
+		<library name="lib/zkclient-0.3.jar"/>
+		<library name="lib/zookeeper-3.3.4.jar"/>
 	</libraries>
     
 	<localized_category>

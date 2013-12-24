@@ -69,20 +69,16 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		}
 
 		try {
-			if (!data.streamIterator.hasNext()) {
-				setOutputDone();
-				return false;
+			while (data.streamIterator.hasNext() && !data.canceled) {
+				r = RowDataUtil.addRowData(r, getInputRowMeta().size(), new Object[] { data.streamIterator.next()
+						.message() });
+				putRow(data.outputRowMeta, r);
+
+				if (isRowLevel()) {
+					logRowlevel(Messages.getString("KafkaConsumerStep.Log.OutputRow", Long.toString(getLinesWritten()),
+							getInputRowMeta().getString(r)));
+				}
 			}
-
-			r = RowDataUtil.addRowData(r, getInputRowMeta().size(),
-					new Object[] { data.streamIterator.next().message() });
-			putRow(data.outputRowMeta, r);
-
-			if (isRowLevel()) {
-				logRowlevel(Messages.getString("KafkaConsumerStep.Log.OutputRow", Long.toString(getLinesWritten()),
-						getInputRowMeta().getString(r)));
-			}
-
 		} catch (KettleException e) {
 			if (!getStepMeta().isDoingErrorHandling()) {
 				logError(Messages.getString("KafkaConsumerStep.ErrorInStepRunning", e.getMessage()));
@@ -94,5 +90,13 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			putError(getInputRowMeta(), r, 1, e.toString(), null, getStepname());
 		}
 		return true;
+	}
+
+	public void stopRunning(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
+
+		KafkaConsumerData data = (KafkaConsumerData) sdi;
+		data.canceled = true;
+
+		super.stopRunning(smi, sdi);
 	}
 }
