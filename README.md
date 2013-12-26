@@ -19,5 +19,5 @@ mvn clean package
 
 ### Installation ###
 
-Extract ```pentaho-kafka-consumer-1.0.0.zip``` in *plugins/steps* directory of your Pentaho Data Integration distribution.
+Extract ```target/pentaho-kafka-consumer-1.0.0.zip``` in *plugins/steps* directory of your Pentaho Data Integration distribution.
 
