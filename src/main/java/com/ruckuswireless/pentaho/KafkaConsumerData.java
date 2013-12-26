@@ -13,4 +13,5 @@ public class KafkaConsumerData extends BaseStepData implements StepDataInterface
 	ConsumerIterator<byte[], byte[]> streamIterator;
 	RowMetaInterface outputRowMeta;
 	boolean canceled;
+	int processed;
 }

@@ -43,6 +43,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 	private TextVar wTopicName;
 	private TextVar wFieldName;
 	private TableView wProps;
+	private TextVar wLimit;
+	private TextVar wTimeout;
 
 	public KafkaConsumerDialog(Shell parent, Object in, TransMeta tr, String sname) {
 		super(parent, (BaseStepMeta) in, tr, sname);
@@ -122,7 +124,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wTopicName.setLayoutData(fdTopicName);
 		lastControl = wTopicName;
 
-		// Topic name
+		// Field name
 		Label wlFieldName = new Label(shell, SWT.RIGHT);
 		wlFieldName.setText(Messages.getString("KafkaConsumerDialog.FieldName.Label"));
 		props.setLook(wlFieldName);
@@ -140,6 +142,44 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		fdFieldName.right = new FormAttachment(100, 0);
 		wFieldName.setLayoutData(fdFieldName);
 		lastControl = wFieldName;
+
+		// Messages limit
+		Label wlLimit = new Label(shell, SWT.RIGHT);
+		wlLimit.setText(Messages.getString("KafkaConsumerDialog.Limit.Label"));
+		props.setLook(wlLimit);
+		FormData fdlLimit = new FormData();
+		fdlLimit.top = new FormAttachment(lastControl, margin);
+		fdlLimit.left = new FormAttachment(0, 0);
+		fdlLimit.right = new FormAttachment(middle, -margin);
+		wlLimit.setLayoutData(fdlLimit);
+		wLimit = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		props.setLook(wLimit);
+		wLimit.addModifyListener(lsMod);
+		FormData fdLimit = new FormData();
+		fdLimit.top = new FormAttachment(lastControl, margin);
+		fdLimit.left = new FormAttachment(middle, 0);
+		fdLimit.right = new FormAttachment(100, 0);
+		wLimit.setLayoutData(fdLimit);
+		lastControl = wLimit;
+
+		// Read timeout
+		Label wlTimeout = new Label(shell, SWT.RIGHT);
+		wlTimeout.setText(Messages.getString("KafkaConsumerDialog.Timeout.Label"));
+		props.setLook(wlTimeout);
+		FormData fdlTimeout = new FormData();
+		fdlTimeout.top = new FormAttachment(lastControl, margin);
+		fdlTimeout.left = new FormAttachment(0, 0);
+		fdlTimeout.right = new FormAttachment(middle, -margin);
+		wlTimeout.setLayoutData(fdlTimeout);
+		wTimeout = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		props.setLook(wTimeout);
+		wTimeout.addModifyListener(lsMod);
+		FormData fdTimeout = new FormData();
+		fdTimeout.top = new FormAttachment(lastControl, margin);
+		fdTimeout.left = new FormAttachment(middle, 0);
+		fdTimeout.right = new FormAttachment(100, 0);
+		wTimeout.setLayoutData(fdTimeout);
+		lastControl = wTimeout;
 
 		// Buttons
 		wOK = new Button(shell, SWT.PUSH);
@@ -194,6 +234,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wStepname.addSelectionListener(lsDef);
 		wTopicName.addSelectionListener(lsDef);
 		wFieldName.addSelectionListener(lsDef);
+		wLimit.addSelectionListener(lsDef);
+		wTimeout.addSelectionListener(lsDef);
 
 		// Detect X or ALT-F4 or something that kills this window...
 		shell.addShellListener(new ShellAdapter() {
@@ -226,6 +268,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		}
 		wTopicName.setText(Const.NVL(consumerMeta.getTopic(), ""));
 		wFieldName.setText(Const.NVL(consumerMeta.getField(), ""));
+		wLimit.setText(Long.toString(consumerMeta.getLimit()));
+		wTimeout.setText(Long.toString(consumerMeta.getTimeout()));
 
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();
 		for (int i = 0; i < KafkaConsumerMeta.KAFKA_PROPERTIES_NAMES.length; ++i) {
@@ -255,6 +299,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 	private void setData(KafkaConsumerMeta consumerMeta) {
 		consumerMeta.setTopic(wTopicName.getText());
 		consumerMeta.setField(wFieldName.getText());
+		consumerMeta.setLimit(Const.toLong(wLimit.getText(), 0));
+		consumerMeta.setTimeout(Const.toLong(wTimeout.getText(), 0));
 
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();
 		int nrNonEmptyFields = wProps.nrNonEmpty();

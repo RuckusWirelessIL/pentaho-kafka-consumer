@@ -3,6 +3,12 @@ package com.ruckuswireless.pentaho;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import kafka.consumer.Consumer;
 import kafka.consumer.KafkaStream;
@@ -58,7 +64,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		}
 
 		KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
-		KafkaConsumerData data = (KafkaConsumerData) sdi;
+		final KafkaConsumerData data = (KafkaConsumerData) sdi;
 
 		if (first) {
 			first = false;
@@ -69,15 +75,36 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		}
 
 		try {
-			while (data.streamIterator.hasNext() && !data.canceled) {
-				r = RowDataUtil.addRowData(r, getInputRowMeta().size(), new Object[] { data.streamIterator.next()
-						.message() });
-				putRow(data.outputRowMeta, r);
+			long timeout = meta.getTimeout();
+			final Object[][] rClosure = new Object[][] { r };
 
-				if (isRowLevel()) {
-					logRowlevel(Messages.getString("KafkaConsumerStep.Log.OutputRow", Long.toString(getLinesWritten()),
-							getInputRowMeta().getString(r)));
+			KafkaConsumer kafkaConsumer = new KafkaConsumer(meta, data) {
+				protected void messageReceived(byte[] message) throws KettleException {
+					rClosure[0] = RowDataUtil.addRowData(rClosure[0], getInputRowMeta().size(),
+							new Object[] { message });
+					putRow(data.outputRowMeta, rClosure[0]);
+
+					if (isRowLevel()) {
+						logRowlevel(Messages.getString("KafkaConsumerStep.Log.OutputRow",
+								Long.toString(getLinesWritten()), data.outputRowMeta.getString(rClosure[0])));
+					}
 				}
+			};
+			if (timeout > 0) {
+				ExecutorService executor = Executors.newSingleThreadExecutor();
+				try {
+					Future<?> future = executor.submit(kafkaConsumer);
+					try {
+						future.get(timeout, TimeUnit.MILLISECONDS);
+					} catch (TimeoutException e) {
+					} catch (Exception e) {
+						throw new KettleException(e);
+					}
+				} finally {
+					executor.shutdown();
+				}
+			} else {
+				kafkaConsumer.call();
 			}
 		} catch (KettleException e) {
 			if (!getStepMeta().isDoingErrorHandling()) {
@@ -99,5 +126,33 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		data.canceled = true;
 
 		super.stopRunning(smi, sdi);
+	}
+
+	private static abstract class KafkaConsumer implements Callable<Object> {
+
+		private KafkaConsumerData data;
+		private KafkaConsumerMeta meta;
+
+		public KafkaConsumer(KafkaConsumerMeta meta, KafkaConsumerData data) {
+			this.meta = meta;
+			this.data = data;
+		}
+
+		/**
+		 * Called when new message arrives from Kafka stream
+		 * 
+		 * @param message
+		 *            Kafka message
+		 */
+		protected abstract void messageReceived(byte[] message) throws KettleException;
+
+		public Object call() throws KettleException {
+			long limit = meta.getLimit();
+			while (data.streamIterator.hasNext() && !data.canceled && (limit <= 0 || data.processed < limit)) {
+				messageReceived(data.streamIterator.next().message());
+				++data.processed;
+			}
+			return null;
+		}
 	}
 }

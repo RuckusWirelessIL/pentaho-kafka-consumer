@@ -42,25 +42,71 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private Properties kafkaProperties = new Properties();
 	private String topic;
 	private String field;
+	private long limit;
+	private long timeout;
 
 	Properties getKafkaProperties() {
 		return kafkaProperties;
 	}
 
+	/**
+	 * @return Kafka topic name
+	 */
 	public String getTopic() {
 		return topic;
 	}
 
+	/**
+	 * @param topic
+	 *            Kafka topic name
+	 */
 	public void setTopic(String topic) {
 		this.topic = topic;
 	}
 
+	/**
+	 * @return Target field name in Kettle stream
+	 */
 	public String getField() {
 		return field;
 	}
 
+	/**
+	 * @param field
+	 *            Target field name in Kettle stream
+	 */
 	public void setField(String field) {
 		this.field = field;
+	}
+
+	/**
+	 * @return Limit number of entries to read from Kafka queue
+	 */
+	public long getLimit() {
+		return limit;
+	}
+
+	/**
+	 * @param limit
+	 *            Limit number of entries to read from Kafka queue
+	 */
+	public void setLimit(long limit) {
+		this.limit = limit;
+	}
+
+	/**
+	 * @return Time limit for reading entries from Kafka queue (in ms)
+	 */
+	public long getTimeout() {
+		return timeout;
+	}
+
+	/**
+	 * @param timeout
+	 *            Time limit for reading entries from Kafka queue (in ms)
+	 */
+	public void setTimeout(long timeout) {
+		this.timeout = timeout;
 	}
 
 	public ConsumerConfig createConsumerConfig() {
@@ -100,6 +146,14 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		try {
 			topic = XMLHandler.getTagValue(stepnode, "TOPIC");
 			field = XMLHandler.getTagValue(stepnode, "FIELD");
+			String limitVal = XMLHandler.getTagValue(stepnode, "LIMIT");
+			if (limitVal != null) {
+				limit = Long.parseLong(limitVal);
+			}
+			String timeoutVal = XMLHandler.getTagValue(stepnode, "TIMEOUT");
+			if (timeoutVal != null) {
+				timeout = Long.parseLong(timeoutVal);
+			}
 			Node kafkaNode = XMLHandler.getSubNode(stepnode, "KAFKA");
 			for (String name : KAFKA_PROPERTIES_NAMES) {
 				String value = XMLHandler.getTagValue(kafkaNode, name);
@@ -120,6 +174,12 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		if (field != null) {
 			retval.append("    ").append(XMLHandler.addTagValue("FIELD", field));
 		}
+		if (limit > 0) {
+			retval.append("    ").append(XMLHandler.addTagValue("LIMIT", limit));
+		}
+		if (timeout > 0) {
+			retval.append("    ").append(XMLHandler.addTagValue("TIMEOUT", timeout));
+		}
 		retval.append("    ").append(XMLHandler.openTag("KAFKA")).append(Const.CR);
 		for (String name : KAFKA_PROPERTIES_NAMES) {
 			String value = kafkaProperties.getProperty(name);
@@ -136,6 +196,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		try {
 			topic = rep.getStepAttributeString(stepId, "TOPIC");
 			field = rep.getStepAttributeString(stepId, "FIELD");
+			limit = rep.getStepAttributeInteger(stepId, "LIMIT");
+			timeout = rep.getStepAttributeInteger(stepId, "TIMEOUT");
 			for (String name : KAFKA_PROPERTIES_NAMES) {
 				String value = rep.getStepAttributeString(stepId, name);
 				if (value != null) {
@@ -154,6 +216,12 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 			}
 			if (field != null) {
 				rep.saveStepAttribute(transformationId, stepId, "FIELD", field);
+			}
+			if (limit > 0) {
+				rep.saveStepAttribute(transformationId, stepId, "LIMIT", limit);
+			}
+			if (timeout > 0) {
+				rep.saveStepAttribute(transformationId, stepId, "TIMEOUT", timeout);
 			}
 			for (String name : KAFKA_PROPERTIES_NAMES) {
 				String value = kafkaProperties.getProperty(name);
