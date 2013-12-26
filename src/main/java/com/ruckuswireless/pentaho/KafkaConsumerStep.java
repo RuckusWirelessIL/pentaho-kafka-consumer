@@ -152,6 +152,8 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 				messageReceived(data.streamIterator.next().message());
 				++data.processed;
 			}
+			// Notify that all messages were read successfully
+			data.consumer.commitOffsets();
 			return null;
 		}
 	}
