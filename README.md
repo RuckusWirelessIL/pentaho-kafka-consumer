@@ -3,6 +3,8 @@ pentaho-kafka-consumer
 
 Apache Kafka consumer step plug-in for Pentaho Kettle.
 
+[![Build Status](https://travis-ci.org/RuckusWirelessIL/pentaho-kafka-consumer.png)](https://travis-ci.org/RuckusWirelessIL/pentaho-kafka-consumer)
+
 
 ### Building ###
 
