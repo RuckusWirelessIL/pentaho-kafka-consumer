@@ -55,8 +55,9 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 
 	public void dispose(StepMetaInterface smi, StepDataInterface sdi) {
 		KafkaConsumerData data = (KafkaConsumerData) sdi;
-		data.consumer.shutdown();
-
+		if (data.consumer != null) {
+			data.consumer.shutdown();
+		}
 		super.dispose(smi, sdi);
 	}
 
