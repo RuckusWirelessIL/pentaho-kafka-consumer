@@ -1,4 +1,4 @@
-package com.ruckuswireless.pentaho;
+package com.ruckuswireless.pentaho.kafka.consumer;
 
 import java.util.Properties;
 
@@ -37,6 +37,11 @@ import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.dialog.TransPreviewProgressDialog;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
+/**
+ * UI for the Kafka Consumer step
+ * 
+ * @author Michael Spector
+ */
 public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInterface {
 
 	private KafkaConsumerMeta consumerMeta;

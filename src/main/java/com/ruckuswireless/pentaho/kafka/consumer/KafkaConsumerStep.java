@@ -1,9 +1,8 @@
-package com.ruckuswireless.pentaho;
+package com.ruckuswireless.pentaho.kafka.consumer;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -27,6 +26,11 @@ import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 
+/**
+ * Kafka Consumer step processor
+ * 
+ * @author Michael Spector
+ */
 public class KafkaConsumerStep extends BaseStep implements StepInterface {
 
 	public KafkaConsumerStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
@@ -78,7 +82,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			long timeout = meta.getTimeout();
 			final Object[][] rClosure = new Object[][] { r };
 
-			KafkaConsumer kafkaConsumer = new KafkaConsumer(meta, data) {
+			KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data) {
 				protected void messageReceived(byte[] message) throws KettleException {
 					rClosure[0] = RowDataUtil.addRowData(rClosure[0], getInputRowMeta().size(),
 							new Object[] { message });
@@ -126,35 +130,5 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		data.canceled = true;
 
 		super.stopRunning(smi, sdi);
-	}
-
-	private static abstract class KafkaConsumer implements Callable<Object> {
-
-		private KafkaConsumerData data;
-		private KafkaConsumerMeta meta;
-
-		public KafkaConsumer(KafkaConsumerMeta meta, KafkaConsumerData data) {
-			this.meta = meta;
-			this.data = data;
-		}
-
-		/**
-		 * Called when new message arrives from Kafka stream
-		 * 
-		 * @param message
-		 *            Kafka message
-		 */
-		protected abstract void messageReceived(byte[] message) throws KettleException;
-
-		public Object call() throws KettleException {
-			long limit = meta.getLimit();
-			while (data.streamIterator.hasNext() && !data.canceled && (limit <= 0 || data.processed < limit)) {
-				messageReceived(data.streamIterator.next().message());
-				++data.processed;
-			}
-			// Notify that all messages were read successfully
-			data.consumer.commitOffsets();
-			return null;
-		}
 	}
 }

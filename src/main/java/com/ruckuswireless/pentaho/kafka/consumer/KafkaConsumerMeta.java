@@ -1,4 +1,4 @@
-package com.ruckuswireless.pentaho;
+package com.ruckuswireless.pentaho.kafka.consumer;
 
 import java.util.List;
 import java.util.Map;
@@ -30,6 +30,12 @@ import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
 import org.w3c.dom.Node;
 
+/**
+ * Kafka Consumer step definitions and serializer to/from XML and to/from Kettle
+ * repository.
+ * 
+ * @author Michael Spector
+ */
 public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface {
 
 	public static final String[] KAFKA_PROPERTIES_NAMES = new String[] { "group.id", "zookeeper.connect",

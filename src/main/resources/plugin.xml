@@ -5,7 +5,7 @@
 	description="Apache Kafka Consumer"
 	tooltip="This plug-in allows reading messages from a specific topic in a Kafka stream"
 	category="Input"
-	classname="com.ruckuswireless.pentaho.KafkaConsumerMeta">
+	classname="com.ruckuswireless.pentaho.kafka.consumer.KafkaConsumerMeta">
 	
 	<libraries>
 		<library name="pentaho-kafka-consumer.jar"/>
