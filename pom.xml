@@ -10,17 +10,13 @@
 	<properties>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<maven.compiler.source>1.6</maven.compiler.source>
-		<kettle.version>4.1.4-GA</kettle.version>
+		<kettle.version>4.4.1-GA</kettle.version>
 	</properties>
 
 	<repositories>
 		<repository>
-			<id>pentaho-repo</id>
-			<url>http://repository.pentaho.org/artifactory/pentaho/</url>
-		</repository>
-		<repository>
-			<id>pentaho-third-party</id>
-			<url>http://repository.pentaho.org/artifactory/third-party/</url>
+			<id>pentaho-releases</id>
+			<url>http://repository.pentaho.org/artifactory/repo/</url>
 		</repository>
 		<repository>
 			<id>swt-repo</id>
@@ -49,22 +45,22 @@
 			</exclusions>
 		</dependency>
 		<dependency>
-			<groupId>pentaho.kettle</groupId>
+			<groupId>pentaho-kettle</groupId>
 			<artifactId>kettle-engine</artifactId>
 			<version>${kettle.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>pentaho.kettle</groupId>
+			<groupId>pentaho-kettle</groupId>
 			<artifactId>kettle-core</artifactId>
 			<version>${kettle.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>pentaho.kettle</groupId>
+			<groupId>pentaho-kettle</groupId>
 			<artifactId>kettle-db</artifactId>
 			<version>${kettle.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>pentaho.kettle</groupId>
+			<groupId>pentaho-kettle</groupId>
 			<artifactId>kettle-ui-swt</artifactId>
 			<version>${kettle.version}</version>
 		</dependency>
