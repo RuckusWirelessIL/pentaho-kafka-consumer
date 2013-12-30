@@ -23,18 +23,12 @@ import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.i18n.BaseMessages;
-import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.TransPreviewFactory;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
-import org.pentaho.di.ui.core.dialog.EnterNumberDialog;
-import org.pentaho.di.ui.core.dialog.EnterTextDialog;
-import org.pentaho.di.ui.core.dialog.PreviewRowsDialog;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
-import org.pentaho.di.ui.trans.dialog.TransPreviewProgressDialog;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 /**
@@ -191,10 +185,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wOK.setText(BaseMessages.getString("System.Button.OK")); //$NON-NLS-1$
 		wCancel = new Button(shell, SWT.PUSH);
 		wCancel.setText(BaseMessages.getString("System.Button.Cancel")); //$NON-NLS-1$
-		wPreview = new Button(shell, SWT.PUSH);
-		wPreview.setText(BaseMessages.getString("System.Button.Preview")); //$NON-NLS-1$
 
-		setButtonPositions(new Button[] { wOK, wPreview, wCancel }, margin, null);
+		setButtonPositions(new Button[] { wOK, wCancel }, margin, null);
 
 		// Kafka properties
 		ColumnInfo[] colinf = new ColumnInfo[] {
@@ -222,14 +214,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 				ok();
 			}
 		};
-		lsPreview = new Listener() {
-			public void handleEvent(Event e) {
-				preview();
-			}
-		};
 		wCancel.addListener(SWT.Selection, lsCancel);
 		wOK.addListener(SWT.Selection, lsOK);
-		wPreview.addListener(SWT.Selection, lsPreview);
 
 		lsDef = new SelectionAdapter() {
 			public void widgetDefaultSelected(SelectionEvent e) {
@@ -332,42 +318,5 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		setData(consumerMeta);
 		stepname = wStepname.getText();
 		dispose();
-	}
-
-	private void preview() {
-		KafkaConsumerMeta oneMeta = new KafkaConsumerMeta();
-		setData(oneMeta);
-
-		TransMeta previewMeta = TransPreviewFactory.generatePreviewTransformation(transMeta, oneMeta,
-				wStepname.getText());
-		transMeta.getVariable("Internal.Transformation.Filename.Directory");
-		previewMeta.getVariable("Internal.Transformation.Filename.Directory");
-
-		EnterNumberDialog numberDialog = new EnterNumberDialog(shell, props.getDefaultPreviewSize(),
-				Messages.getString("KafkaConsumerDialog.PreviewSize.DialogTitle"),
-				Messages.getString("KafkaConsumerDialog.PreviewSize.DialogMessage"));
-		int previewSize = numberDialog.open();
-		if (previewSize > 0) {
-			TransPreviewProgressDialog progressDialog = new TransPreviewProgressDialog(shell, previewMeta,
-					new String[] { wStepname.getText() }, new int[] { previewSize });
-			progressDialog.open();
-
-			Trans trans = progressDialog.getTrans();
-			String loggingText = progressDialog.getLoggingText();
-
-			if (!progressDialog.isCancelled()) {
-				if (trans.getResult() != null && trans.getResult().getNrErrors() > 0) {
-					EnterTextDialog etd = new EnterTextDialog(shell,
-							Messages.getString("System.Dialog.PreviewError.Title"),
-							Messages.getString("System.Dialog.PreviewError.Message"), loggingText, true);
-					etd.setReadOnly();
-					etd.open();
-				}
-			}
-			PreviewRowsDialog prd = new PreviewRowsDialog(shell, transMeta, SWT.NONE, wStepname.getText(),
-					progressDialog.getPreviewRowsMeta(wStepname.getText()), progressDialog.getPreviewRows(wStepname
-							.getText()), loggingText);
-			prd.open();
-		}
 	}
 }
