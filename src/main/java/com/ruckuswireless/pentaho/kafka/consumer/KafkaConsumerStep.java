@@ -3,6 +3,8 @@ package com.ruckuswireless.pentaho.kafka.consumer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Properties;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -10,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 import kafka.consumer.Consumer;
+import kafka.consumer.ConsumerConfig;
 import kafka.consumer.KafkaStream;
 
 import org.pentaho.di.core.exception.KettleException;
@@ -40,11 +43,19 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
 		KafkaConsumerData data = (KafkaConsumerData) sdi;
 
-		data.consumer = Consumer.createJavaConsumerConnector(meta.createConsumerConfig());
+		Properties properties = meta.getKafkaProperties();
+		Properties substProperties = new Properties();
+		for (Entry<Object, Object> e : properties.entrySet()) {
+			substProperties.put(e.getKey(), environmentSubstitute(e.getValue().toString()));
+		}
+		ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
+
+		data.consumer = Consumer.createJavaConsumerConnector(consumerConfig);
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-		topicCountMap.put(meta.getTopic(), 1);
+		String topic = environmentSubstitute(meta.getTopic());
+		topicCountMap.put(topic, 1);
 		Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap = data.consumer.createMessageStreams(topicCountMap);
-		data.streamIterator = streamsMap.get(meta.getTopic()).get(0).iterator();
+		data.streamIterator = streamsMap.get(topic).get(0).iterator();
 
 		return true;
 	}

@@ -115,10 +115,6 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		this.timeout = timeout;
 	}
 
-	public ConsumerConfig createConsumerConfig() {
-		return new ConsumerConfig(kafkaProperties);
-	}
-
 	public void check(List<CheckResultInterface> remarks, TransMeta transMeta, StepMeta stepMeta,
 			RowMetaInterface prev, String input[], String output[], RowMetaInterface info) {
 
@@ -246,7 +242,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
 			VariableSpace space) throws KettleStepException {
 
-		ValueMetaInterface valueMeta = new ValueMeta(field, ValueMetaInterface.TYPE_BINARY);
+		ValueMetaInterface valueMeta = new ValueMeta(getField(), ValueMetaInterface.TYPE_BINARY);
 		valueMeta.setOrigin(origin);
 		rowMeta.addValueMeta(valueMeta);
 	}
