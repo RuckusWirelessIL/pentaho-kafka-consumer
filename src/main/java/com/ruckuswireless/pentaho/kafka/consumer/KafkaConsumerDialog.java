@@ -300,12 +300,10 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 			int colnr = 1;
 			String name = item.getText(colnr++);
 			String value = item.getText(colnr++).trim();
-			if (value.length() > 0) {
-				if ("(default)".equals(value)) {
-					kafkaProperties.remove(name);
-				} else {
-					kafkaProperties.put(name, value);
-				}
+			if (value.length() > 0 && !"(default)".equals(value)) {
+				kafkaProperties.put(name, value);
+			} else {
+				kafkaProperties.remove(name);
 			}
 		}
 		wProps.removeEmptyRows();
