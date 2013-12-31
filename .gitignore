@@ -2,5 +2,4 @@
 *.jar
 *.war
 *.ear
-target/*
-!target/*.zip
+/target
