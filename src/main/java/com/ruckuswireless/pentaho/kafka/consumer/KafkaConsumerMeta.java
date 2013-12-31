@@ -245,7 +245,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
 			VariableSpace space) throws KettleStepException {
-		rowMeta.clear();
+
 		ValueMetaInterface valueMeta = new ValueMeta(field, ValueMetaInterface.TYPE_BINARY);
 		valueMeta.setOrigin(origin);
 		rowMeta.addValueMeta(valueMeta);

@@ -14,10 +14,6 @@ import kafka.consumer.KafkaStream;
 
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowDataUtil;
-import org.pentaho.di.core.row.RowMeta;
-import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.ValueMeta;
-import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -74,9 +70,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		if (first) {
 			first = false;
 			data.outputRowMeta = getInputRowMeta().clone();
-			RowMetaInterface rowMeta = new RowMeta();
-			rowMeta.addValueMeta(new ValueMeta(meta.getField(), ValueMetaInterface.TYPE_BINARY));
-			data.outputRowMeta.mergeRowMeta(rowMeta);
+			meta.getFields(data.outputRowMeta, getStepname(), null, null, this);
 		}
 
 		try {
