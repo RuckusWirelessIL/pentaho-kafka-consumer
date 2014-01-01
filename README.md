@@ -11,12 +11,14 @@ Apache Kafka consumer step plug-in for Pentaho Kettle.
 ![Using Apache Kafka Consumer in Kettle](https://raw.github.com/RuckusWirelessIL/pentaho-kafka-consumer/master/doc/example.png)
 
 
-### Building ###
+### Installation ###
+
+1. Download ```pentaho-kafka-consumer``` Zip archive from [latest release page](https://github.com/RuckusWirelessIL/pentaho-kafka-consumer/releases/latest).
+2. Extract downloaded archive into *plugins/steps* directory of your Pentaho Data Integration distribution.
+
+
+### Building from source code ###
 
 ```
 mvn clean package
 ```
-
-### Installation ###
-
-Extract ```target/pentaho-kafka-consumer-1.0.0.zip``` in *plugins/steps* directory of your Pentaho Data Integration distribution.
