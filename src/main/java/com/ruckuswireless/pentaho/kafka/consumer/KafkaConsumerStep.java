@@ -50,6 +50,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		}
 		ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
 
+		logBasic(Messages.getString("KafkaConsumerStep.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
 		data.consumer = Consumer.createJavaConsumerConnector(consumerConfig);
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		String topic = environmentSubstitute(meta.getTopic());
