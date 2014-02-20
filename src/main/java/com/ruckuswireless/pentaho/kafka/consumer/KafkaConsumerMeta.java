@@ -1,5 +1,6 @@
 package com.ruckuswireless.pentaho.kafka.consumer;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
@@ -38,12 +39,17 @@ import org.w3c.dom.Node;
  */
 public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface {
 
-	public static final String[] KAFKA_PROPERTIES_NAMES = new String[] { "group.id", "zookeeper.connect",
+	public static final String[] KAFKA_PROPERTIES_NAMES = new String[] { "zookeeper.connect", "group.id",
 			"consumer.id", "socket.timeout.ms", "socket.receive.buffer.bytes", "fetch.message.max.bytes",
 			"auto.commit.interval.ms", "queued.max.message.chunks", "rebalance.max.retries", "fetch.min.bytes",
 			"fetch.wait.max.ms", "rebalance.backoff.ms", "refresh.leader.backoff.ms", "auto.commit.enable",
 			"auto.offset.reset", "consumer.timeout.ms", "client.id", "zookeeper.session.timeout.ms",
 			"zookeeper.connection.timeout.ms", "zookeeper.sync.time.ms" };
+	public static final Map<String, String> KAFKA_PROPERTIES_DEFAULTS = new HashMap<String, String>();
+	static {
+		KAFKA_PROPERTIES_DEFAULTS.put("zookeeper.connect", "localhost:2181");
+		KAFKA_PROPERTIES_DEFAULTS.put("group.id", "group");
+	}
 
 	private Properties kafkaProperties = new Properties();
 	private String topic;

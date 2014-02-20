@@ -269,7 +269,11 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 			TableItem item = new TableItem(wProps.table, i > 1 ? SWT.BOLD : SWT.NONE);
 			int colnr = 1;
 			item.setText(colnr++, Const.NVL(propName, ""));
-			item.setText(colnr++, Const.NVL(value, i > 1 ? "(default)" : ""));
+			String defaultValue = KafkaConsumerMeta.KAFKA_PROPERTIES_DEFAULTS.get(propName);
+			if (defaultValue == null) {
+				defaultValue = "(default)";
+			}
+			item.setText(colnr++, Const.NVL(value, defaultValue));
 		}
 		wProps.removeEmptyRows();
 		wProps.setRowNums();
