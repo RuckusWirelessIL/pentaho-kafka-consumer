@@ -23,7 +23,7 @@
 				<include>jline-0.9.94.jar</include>
 				<include>jopt-simple-3.2.jar</include>
 				<include>junit-3.8.1.jar</include>
-				<include>kafka_2.10-0.8.0.jar</include>
+				<include>kafka_2.10-0.8.1.jar</include>
 				<include>log4j-1.2.15.jar</include>
 				<include>mail-1.4.jar</include>
 				<include>metrics-annotation-2.2.0.jar</include>
