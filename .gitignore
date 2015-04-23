@@ -3,3 +3,4 @@
 *.war
 *.ear
 /target
+/TAGS
