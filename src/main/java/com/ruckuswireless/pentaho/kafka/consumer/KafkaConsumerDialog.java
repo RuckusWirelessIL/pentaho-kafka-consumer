@@ -44,7 +44,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 	private TableView wProps;
 	private TextVar wLimit;
 	private TextVar wTimeout;
-
+	private Button wStopOnEmptyTopic;
+	
 	public KafkaConsumerDialog(Shell parent, Object in, TransMeta tr, String sname) {
 		super(parent, (BaseStepMeta) in, tr, sname);
 		consumerMeta = (KafkaConsumerMeta) in;
@@ -180,6 +181,23 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wTimeout.setLayoutData(fdTimeout);
 		lastControl = wTimeout;
 
+		Label wlStopOnEmptyTopic = new Label(shell, SWT.RIGHT);
+		wlStopOnEmptyTopic.setText(Messages.getString("KafkaConsumerDialog.StopOnEmpty.Label"));
+		props.setLook(wlStopOnEmptyTopic);
+		FormData fdlStopOnEmptyTopic = new FormData();
+		fdlStopOnEmptyTopic.top = new FormAttachment(lastControl, margin);
+		fdlStopOnEmptyTopic.left = new FormAttachment(0, 0);
+		fdlStopOnEmptyTopic.right = new FormAttachment(middle, -margin);
+		wlStopOnEmptyTopic.setLayoutData(fdlStopOnEmptyTopic);
+		wStopOnEmptyTopic = new Button(shell, SWT.CHECK | SWT.LEFT | SWT.BORDER);
+		props.setLook(wStopOnEmptyTopic);
+		FormData fdStopOnEmptyTopic = new FormData();
+		fdStopOnEmptyTopic.top = new FormAttachment(lastControl, margin);
+		fdStopOnEmptyTopic.left = new FormAttachment(middle, 0);
+		fdStopOnEmptyTopic.right = new FormAttachment(100, 0);
+		wStopOnEmptyTopic.setLayoutData(fdStopOnEmptyTopic);
+		lastControl = wStopOnEmptyTopic;
+
 		// Buttons
 		wOK = new Button(shell, SWT.PUSH);
 		wOK.setText(BaseMessages.getString("System.Button.OK")); //$NON-NLS-1$
@@ -227,6 +245,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wFieldName.addSelectionListener(lsDef);
 		wLimit.addSelectionListener(lsDef);
 		wTimeout.addSelectionListener(lsDef);
+		wStopOnEmptyTopic.addSelectionListener(lsDef);
 
 		// Detect X or ALT-F4 or something that kills this window...
 		shell.addShellListener(new ShellAdapter() {
@@ -261,6 +280,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wFieldName.setText(Const.NVL(consumerMeta.getField(), ""));
 		wLimit.setText(Long.toString(consumerMeta.getLimit()));
 		wTimeout.setText(Long.toString(consumerMeta.getTimeout()));
+		wStopOnEmptyTopic.setSelection(consumerMeta.isStopOnEmptyTopic());
 
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();
 		for (int i = 0; i < KafkaConsumerMeta.KAFKA_PROPERTIES_NAMES.length; ++i) {
@@ -296,6 +316,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		consumerMeta.setField(wFieldName.getText());
 		consumerMeta.setLimit(Const.toLong(wLimit.getText(), 0));
 		consumerMeta.setTimeout(Const.toLong(wTimeout.getText(), 0));
+		consumerMeta.setStopOnEmptyTopic(wStopOnEmptyTopic.getSelection());
 
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();
 		int nrNonEmptyFields = wProps.nrNonEmpty();

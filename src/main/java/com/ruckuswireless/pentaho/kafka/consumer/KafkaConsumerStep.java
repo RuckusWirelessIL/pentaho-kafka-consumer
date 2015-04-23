@@ -28,10 +28,11 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 
 /**
  * Kafka Consumer step processor
- * 
+ *
  * @author Michael Spector
  */
 public class KafkaConsumerStep extends BaseStep implements StepInterface {
+	public static final String CONSUMER_TIMEOUT_KEY = "consumer.timeout.ms";
 
 	public KafkaConsumerStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
 			Trans trans) {
@@ -49,6 +50,17 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		for (Entry<Object, Object> e : properties.entrySet()) {
 			substProperties.put(e.getKey(), environmentSubstitute(e.getValue().toString()));
 		}
+		if (meta.isStopOnEmptyTopic()) {
+
+			// If there isn't already a provided value, set a default of 1s
+			if (!substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
+				substProperties.put(CONSUMER_TIMEOUT_KEY, "1000");
+			}
+		} else {
+			if (substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
+				logError(Messages.getString("KafkaConsumerStep.WarnConsumerTimeout"));
+			}
+		}
 		ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
 
 		logBasic(Messages.getString("KafkaConsumerStep.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
@@ -57,6 +69,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		String topic = environmentSubstitute(meta.getTopic());
 		topicCountMap.put(topic, 1);
 		Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap = data.consumer.createMessageStreams(topicCountMap);
+		logDebug("Received streams map: " + streamsMap);
 		data.streamIterator = streamsMap.get(topic).get(0).iterator();
 
 		return true;
@@ -119,6 +132,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 				}
 			};
 			if (timeout > 0) {
+				logDebug("Starting timed consumption");
 				ExecutorService executor = Executors.newSingleThreadExecutor();
 				try {
 					Future<?> future = executor.submit(kafkaConsumer);
@@ -132,6 +146,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 					executor.shutdown();
 				}
 			} else {
+				logDebug("Starting direct consumption");
 				kafkaConsumer.call();
 			}
 		} catch (KettleException e) {
