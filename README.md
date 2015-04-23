@@ -15,6 +15,15 @@ Apache Kafka consumer step plug-in for Pentaho Kettle.
 
 The consumer depends on Apache Kafka 0.8.1.1, which means that the broker must be of 0.8.x version or later.
 
+### Maximum Duration Of Consumption ###
+
+Note that the maximum duration of consumption is a limit on the duration of the
+entire step, *not* an individual read. This means that if you have a maximum
+duration of 5000ms, your transformation will stop after 5s, whether or
+not more data exists and independent of how fast each message is fetched from
+the topic. If you want to stop reading messages when the topic has no more
+messages, see the section on _Empty topic handling_.
+
 ### Empty topic handling ###
 
 If you want the step to halt when there are no more messages available on the
