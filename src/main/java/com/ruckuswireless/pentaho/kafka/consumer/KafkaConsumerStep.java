@@ -17,6 +17,7 @@ import kafka.consumer.KafkaStream;
 
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowDataUtil;
+import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -72,8 +73,15 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 	public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
 		Object[] r = getRow();
 		if (r == null) {
-			setOutputDone();
-			return false;
+			/* If we have no input rows, make sure we at least run once to produce output rows.
+			   This allows us to consume without requiring an input step. */
+			if (!first) {
+				setOutputDone();
+				return false;
+			}
+			r = new Object[0];
+		} else {
+			incrementLinesRead();
 		}
 
 		KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
@@ -81,7 +89,14 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 
 		if (first) {
 			first = false;
-			data.outputRowMeta = getInputRowMeta().clone();
+			data.inputRowMeta = getInputRowMeta();
+			// No input rows means we just dummy data
+			if (data.inputRowMeta == null) {
+				data.outputRowMeta = new RowMeta();
+				data.inputRowMeta = new RowMeta();
+			} else {
+				data.outputRowMeta = getInputRowMeta().clone();
+			}
 			meta.getFields(data.outputRowMeta, getStepname(), null, null, this);
 		}
 
@@ -89,9 +104,11 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			long timeout = meta.getTimeout();
 			final Object[][] rClosure = new Object[][] { r };
 
-			KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data) {
+			logDebug("Starting message consumption with overall timeout of " + timeout + "ms");
+
+			KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data, this) {
 				protected void messageReceived(byte[] message) throws KettleException {
-					rClosure[0] = RowDataUtil.addRowData(rClosure[0], getInputRowMeta().size(),
+					rClosure[0] = RowDataUtil.addRowData(rClosure[0], data.inputRowMeta.size(),
 							new Object[] { message });
 					putRow(data.outputRowMeta, rClosure[0]);
 
