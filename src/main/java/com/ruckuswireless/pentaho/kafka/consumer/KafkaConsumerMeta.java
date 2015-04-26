@@ -56,6 +56,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private String field;
 	private long limit;
 	private long timeout;
+	private boolean stopOnEmptyTopic;
 
 	Properties getKafkaProperties() {
 		return kafkaProperties;
@@ -121,6 +122,21 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		this.timeout = timeout;
 	}
 
+	/**
+	 * @return 'true' if the consumer should stop when no more messages are available
+	 */
+	public boolean isStopOnEmptyTopic() {
+		return stopOnEmptyTopic;
+	}
+
+	/**
+	 * @param stopOnEmptyTopic
+	 *            If 'true', stop the consumer when no more messages are available on the topic
+	 */
+	public void setStopOnEmptyTopic(boolean stopOnEmptyTopic) {
+		this.stopOnEmptyTopic = stopOnEmptyTopic;
+	}
+
 	public void check(List<CheckResultInterface> remarks, TransMeta transMeta, StepMeta stepMeta,
 			RowMetaInterface prev, String input[], String output[], RowMetaInterface info) {
 
@@ -162,6 +178,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 			if (timeoutVal != null) {
 				timeout = Long.parseLong(timeoutVal);
 			}
+			// This tag only exists if the value is "true", so we can directly populate the field
+			stopOnEmptyTopic = XMLHandler.getTagValue(stepnode, "STOPONEMPTYTOPIC") != null;
 			Node kafkaNode = XMLHandler.getSubNode(stepnode, "KAFKA");
 			for (String name : KAFKA_PROPERTIES_NAMES) {
 				String value = XMLHandler.getTagValue(kafkaNode, name);
@@ -188,6 +206,9 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		if (timeout > 0) {
 			retval.append("    ").append(XMLHandler.addTagValue("TIMEOUT", timeout));
 		}
+		if (stopOnEmptyTopic) {
+			retval.append("    ").append(XMLHandler.addTagValue("STOPONEMPTYTOPIC", "true"));
+		}
 		retval.append("    ").append(XMLHandler.openTag("KAFKA")).append(Const.CR);
 		for (String name : KAFKA_PROPERTIES_NAMES) {
 			String value = kafkaProperties.getProperty(name);
@@ -206,6 +227,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 			field = rep.getStepAttributeString(stepId, "FIELD");
 			limit = rep.getStepAttributeInteger(stepId, "LIMIT");
 			timeout = rep.getStepAttributeInteger(stepId, "TIMEOUT");
+			stopOnEmptyTopic = rep.getStepAttributeBoolean(stepId, "STOPONEMPTYTOPIC");
 			for (String name : KAFKA_PROPERTIES_NAMES) {
 				String value = rep.getStepAttributeString(stepId, name);
 				if (value != null) {
@@ -231,6 +253,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 			if (timeout > 0) {
 				rep.saveStepAttribute(transformationId, stepId, "TIMEOUT", timeout);
 			}
+			rep.saveStepAttribute(transformationId, stepId, "STOPONEMPTYTOPIC", stopOnEmptyTopic);
 			for (String name : KAFKA_PROPERTIES_NAMES) {
 				String value = kafkaProperties.getProperty(name);
 				if (value != null) {

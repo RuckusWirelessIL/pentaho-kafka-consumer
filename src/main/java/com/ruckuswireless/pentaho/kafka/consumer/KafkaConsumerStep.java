@@ -17,6 +17,7 @@ import kafka.consumer.KafkaStream;
 
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowDataUtil;
+import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
 import org.pentaho.di.trans.step.BaseStep;
@@ -27,10 +28,11 @@ import org.pentaho.di.trans.step.StepMetaInterface;
 
 /**
  * Kafka Consumer step processor
- * 
+ *
  * @author Michael Spector
  */
 public class KafkaConsumerStep extends BaseStep implements StepInterface {
+	public static final String CONSUMER_TIMEOUT_KEY = "consumer.timeout.ms";
 
 	public KafkaConsumerStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
 			Trans trans) {
@@ -48,6 +50,17 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		for (Entry<Object, Object> e : properties.entrySet()) {
 			substProperties.put(e.getKey(), environmentSubstitute(e.getValue().toString()));
 		}
+		if (meta.isStopOnEmptyTopic()) {
+
+			// If there isn't already a provided value, set a default of 1s
+			if (!substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
+				substProperties.put(CONSUMER_TIMEOUT_KEY, "1000");
+			}
+		} else {
+			if (substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
+				logError(Messages.getString("KafkaConsumerStep.WarnConsumerTimeout"));
+			}
+		}
 		ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
 
 		logBasic(Messages.getString("KafkaConsumerStep.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
@@ -56,6 +69,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		String topic = environmentSubstitute(meta.getTopic());
 		topicCountMap.put(topic, 1);
 		Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap = data.consumer.createMessageStreams(topicCountMap);
+		logDebug("Received streams map: " + streamsMap);
 		data.streamIterator = streamsMap.get(topic).get(0).iterator();
 
 		return true;
@@ -72,8 +86,15 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 	public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
 		Object[] r = getRow();
 		if (r == null) {
-			setOutputDone();
-			return false;
+			/* If we have no input rows, make sure we at least run once to produce output rows.
+			   This allows us to consume without requiring an input step. */
+			if (!first) {
+				setOutputDone();
+				return false;
+			}
+			r = new Object[0];
+		} else {
+			incrementLinesRead();
 		}
 
 		KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
@@ -81,7 +102,14 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 
 		if (first) {
 			first = false;
-			data.outputRowMeta = getInputRowMeta().clone();
+			data.inputRowMeta = getInputRowMeta();
+			// No input rows means we just dummy data
+			if (data.inputRowMeta == null) {
+				data.outputRowMeta = new RowMeta();
+				data.inputRowMeta = new RowMeta();
+			} else {
+				data.outputRowMeta = getInputRowMeta().clone();
+			}
 			meta.getFields(data.outputRowMeta, getStepname(), null, null, this);
 		}
 
@@ -89,9 +117,11 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			long timeout = meta.getTimeout();
 			final Object[][] rClosure = new Object[][] { r };
 
-			KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data) {
+			logDebug("Starting message consumption with overall timeout of " + timeout + "ms");
+
+			KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data, this) {
 				protected void messageReceived(byte[] message) throws KettleException {
-					rClosure[0] = RowDataUtil.addRowData(rClosure[0], getInputRowMeta().size(),
+					rClosure[0] = RowDataUtil.addRowData(rClosure[0], data.inputRowMeta.size(),
 							new Object[] { message });
 					putRow(data.outputRowMeta, rClosure[0]);
 
@@ -102,6 +132,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 				}
 			};
 			if (timeout > 0) {
+				logDebug("Starting timed consumption");
 				ExecutorService executor = Executors.newSingleThreadExecutor();
 				try {
 					Future<?> future = executor.submit(kafkaConsumer);
@@ -115,6 +146,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 					executor.shutdown();
 				}
 			} else {
+				logDebug("Starting direct consumption");
 				kafkaConsumer.call();
 			}
 		} catch (KettleException e) {
