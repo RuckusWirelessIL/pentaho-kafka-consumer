@@ -97,6 +97,8 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			incrementLinesRead();
 		}
 
+		final Object[] inputRow = r;
+
 		KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
 		final KafkaConsumerData data = (KafkaConsumerData) sdi;
 
@@ -115,19 +117,18 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 
 		try {
 			long timeout = meta.getTimeout();
-			final Object[][] rClosure = new Object[][] { r };
 
 			logDebug("Starting message consumption with overall timeout of " + timeout + "ms");
 
 			KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data, this) {
 				protected void messageReceived(byte[] message) throws KettleException {
-					rClosure[0] = RowDataUtil.addRowData(rClosure[0], data.inputRowMeta.size(),
+					Object[] newRow = RowDataUtil.addRowData(inputRow.clone(), data.inputRowMeta.size(),
 							new Object[] { message });
-					putRow(data.outputRowMeta, rClosure[0]);
+					putRow(data.outputRowMeta, newRow);
 
 					if (isRowLevel()) {
 						logRowlevel(Messages.getString("KafkaConsumerStep.Log.OutputRow",
-								Long.toString(getLinesWritten()), data.outputRowMeta.getString(rClosure[0])));
+								Long.toString(getLinesWritten()), data.outputRowMeta.getString(newRow)));
 					}
 				}
 			};
