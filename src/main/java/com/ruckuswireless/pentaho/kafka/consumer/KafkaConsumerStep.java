@@ -121,7 +121,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			logDebug("Starting message consumption with overall timeout of " + timeout + "ms");
 
 			KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data, this) {
-				protected void messageReceived(byte[] message) throws KettleException {
+				protected void messageReceived(byte[] key, byte[] message) throws KettleException {
 					Object[] newRow = RowDataUtil.addRowData(inputRow.clone(), data.inputRowMeta.size(),
 							new Object[] { message });
 					putRow(data.outputRowMeta, newRow);
