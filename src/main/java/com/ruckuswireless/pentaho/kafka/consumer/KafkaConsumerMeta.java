@@ -54,6 +54,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private Properties kafkaProperties = new Properties();
 	private String topic;
 	private String field;
+    private String keyField;
 	private long limit;
 	private long timeout;
 	private boolean stopOnEmptyTopic;
@@ -90,6 +91,21 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	 */
 	public void setField(String field) {
 		this.field = field;
+	}
+
+	/**
+	 * @return Target key field name in Kettle stream
+	 */
+	public String getKeyField() {
+		return keyField;
+	}
+
+	/**
+	 * @param keyField
+	 *            Target key field name in Kettle stream
+	 */
+	public void setKeyField(String keyField) {
+		this.keyField = keyField;
 	}
 
 	/**
