@@ -41,6 +41,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 	private KafkaConsumerMeta consumerMeta;
 	private TextVar wTopicName;
 	private TextVar wFieldName;
+	private TextVar wKeyFieldName;
 	private TableView wProps;
 	private TextVar wLimit;
 	private TextVar wTimeout;
@@ -143,6 +144,25 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wFieldName.setLayoutData(fdFieldName);
 		lastControl = wFieldName;
 
+		// Key field name
+		Label wlKeyFieldName = new Label(shell, SWT.RIGHT);
+		wlKeyFieldName.setText(Messages.getString("KafkaConsumerDialog.KeyFieldName.Label"));
+		props.setLook(wlKeyFieldName);
+		FormData fdlKeyFieldName = new FormData();
+		fdlKeyFieldName.top = new FormAttachment(lastControl, margin);
+		fdlKeyFieldName.left = new FormAttachment(0, 0);
+		fdlKeyFieldName.right = new FormAttachment(middle, -margin);
+		wlKeyFieldName.setLayoutData(fdlKeyFieldName);
+		wKeyFieldName = new TextVar(transMeta, shell, SWT.SINGLE | SWT.LEFT | SWT.BORDER);
+		props.setLook(wKeyFieldName);
+		wKeyFieldName.addModifyListener(lsMod);
+		FormData fdKeyFieldName = new FormData();
+		fdKeyFieldName.top = new FormAttachment(lastControl, margin);
+		fdKeyFieldName.left = new FormAttachment(middle, 0);
+		fdKeyFieldName.right = new FormAttachment(100, 0);
+		wKeyFieldName.setLayoutData(fdKeyFieldName);
+		lastControl = wKeyFieldName;
+
 		// Messages limit
 		Label wlLimit = new Label(shell, SWT.RIGHT);
 		wlLimit.setText(Messages.getString("KafkaConsumerDialog.Limit.Label"));
@@ -243,6 +263,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wStepname.addSelectionListener(lsDef);
 		wTopicName.addSelectionListener(lsDef);
 		wFieldName.addSelectionListener(lsDef);
+		wKeyFieldName.addSelectionListener(lsDef);
 		wLimit.addSelectionListener(lsDef);
 		wTimeout.addSelectionListener(lsDef);
 		wStopOnEmptyTopic.addSelectionListener(lsDef);
@@ -278,6 +299,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		}
 		wTopicName.setText(Const.NVL(consumerMeta.getTopic(), ""));
 		wFieldName.setText(Const.NVL(consumerMeta.getField(), ""));
+		wKeyFieldName.setText(Const.NVL(consumerMeta.getKeyField(), ""));
 		wLimit.setText(Long.toString(consumerMeta.getLimit()));
 		wTimeout.setText(Long.toString(consumerMeta.getTimeout()));
 		wStopOnEmptyTopic.setSelection(consumerMeta.isStopOnEmptyTopic());
@@ -314,6 +336,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 	private void setData(KafkaConsumerMeta consumerMeta) {
 		consumerMeta.setTopic(wTopicName.getText());
 		consumerMeta.setField(wFieldName.getText());
+		consumerMeta.setKeyField(wKeyFieldName.getText());
 		consumerMeta.setLimit(Const.toLong(wLimit.getText(), 0));
 		consumerMeta.setTimeout(Const.toLong(wTimeout.getText(), 0));
 		consumerMeta.setStopOnEmptyTopic(wStopOnEmptyTopic.getSelection());

@@ -54,6 +54,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private Properties kafkaProperties = new Properties();
 	private String topic;
 	private String field;
+    private String keyField;
 	private long limit;
 	private long timeout;
 	private boolean stopOnEmptyTopic;
@@ -90,6 +91,21 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	 */
 	public void setField(String field) {
 		this.field = field;
+	}
+
+	/**
+	 * @return Target key field name in Kettle stream
+	 */
+	public String getKeyField() {
+		return keyField;
+	}
+
+	/**
+	 * @param keyField
+	 *            Target key field name in Kettle stream
+	 */
+	public void setKeyField(String keyField) {
+		this.keyField = keyField;
 	}
 
 	/**
@@ -148,6 +164,10 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 			remarks.add(new CheckResult(CheckResultInterface.TYPE_RESULT_ERROR, Messages
 					.getString("KafkaConsumerMeta.Check.InvalidField"), stepMeta));
 		}
+		if (keyField == null) {
+			remarks.add(new CheckResult(CheckResultInterface.TYPE_RESULT_ERROR, Messages
+					.getString("KafkaConsumerMeta.Check.InvalidKeyField"), stepMeta));
+		}
 		try {
 			new ConsumerConfig(kafkaProperties);
 		} catch (IllegalArgumentException e) {
@@ -170,6 +190,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		try {
 			topic = XMLHandler.getTagValue(stepnode, "TOPIC");
 			field = XMLHandler.getTagValue(stepnode, "FIELD");
+            keyField = XMLHandler.getTagValue(stepnode, "KEY_FIELD");
 			String limitVal = XMLHandler.getTagValue(stepnode, "LIMIT");
 			if (limitVal != null) {
 				limit = Long.parseLong(limitVal);
@@ -200,6 +221,9 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		if (field != null) {
 			retval.append("    ").append(XMLHandler.addTagValue("FIELD", field));
 		}
+		if (keyField != null) {
+			retval.append("    ").append(XMLHandler.addTagValue("KEY_FIELD", keyField));
+		}
 		if (limit > 0) {
 			retval.append("    ").append(XMLHandler.addTagValue("LIMIT", limit));
 		}
@@ -225,6 +249,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		try {
 			topic = rep.getStepAttributeString(stepId, "TOPIC");
 			field = rep.getStepAttributeString(stepId, "FIELD");
+			keyField = rep.getStepAttributeString(stepId, "KEY_FIELD");
 			limit = rep.getStepAttributeInteger(stepId, "LIMIT");
 			timeout = rep.getStepAttributeInteger(stepId, "TIMEOUT");
 			stopOnEmptyTopic = rep.getStepAttributeBoolean(stepId, "STOPONEMPTYTOPIC");
@@ -246,6 +271,9 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 			}
 			if (field != null) {
 				rep.saveStepAttribute(transformationId, stepId, "FIELD", field);
+			}
+			if (keyField != null) {
+				rep.saveStepAttribute(transformationId, stepId, "KEY_FIELD", keyField);
 			}
 			if (limit > 0) {
 				rep.saveStepAttribute(transformationId, stepId, "LIMIT", limit);
@@ -271,8 +299,12 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
 			VariableSpace space) throws KettleStepException {
 
-		ValueMetaInterface valueMeta = new ValueMeta(getField(), ValueMetaInterface.TYPE_BINARY);
-		valueMeta.setOrigin(origin);
-		rowMeta.addValueMeta(valueMeta);
+		ValueMetaInterface fieldValueMeta = new ValueMeta(getField(), ValueMetaInterface.TYPE_BINARY);
+		fieldValueMeta.setOrigin(origin);
+		rowMeta.addValueMeta(fieldValueMeta);
+
+		ValueMetaInterface keyFieldValueMeta = new ValueMeta(getKeyField(), ValueMetaInterface.TYPE_BINARY);
+		keyFieldValueMeta.setOrigin(origin);
+		rowMeta.addValueMeta(keyFieldValueMeta);
 	}
 }

@@ -1,6 +1,7 @@
 package com.ruckuswireless.pentaho.kafka.consumer;
 
 import kafka.consumer.ConsumerTimeoutException;
+import kafka.message.MessageAndMetadata;
 
 import java.util.concurrent.Callable;
 
@@ -28,8 +29,10 @@ public abstract class KafkaConsumerCallable implements Callable<Object> {
 	 *
 	 * @param message
 	 *            Kafka message
+     * @param key
+     *            Kafka key
 	 */
-	protected abstract void messageReceived(byte[] message) throws KettleException;
+	protected abstract void messageReceived(byte[] key, byte[] message) throws KettleException;
 
 	public Object call() throws KettleException {
 		try {
@@ -40,7 +43,8 @@ public abstract class KafkaConsumerCallable implements Callable<Object> {
 				step.logDebug("Collecting unlimited messages");
 			}
 			while (data.streamIterator.hasNext() && !data.canceled && (limit <= 0 || data.processed < limit)) {
-				messageReceived(data.streamIterator.next().message());
+                MessageAndMetadata<byte[], byte[]> messageAndMetadata = data.streamIterator.next();
+				messageReceived(messageAndMetadata.key(), messageAndMetadata.message());
 				++data.processed;
 			}
 		} catch (ConsumerTimeoutException cte) {
