@@ -12,14 +12,14 @@
 		<library name="lib/jline-0.9.94.jar"/>
 		<library name="lib/jopt-simple-3.2.jar"/>
 		<library name="lib/junit-3.8.1.jar"/>
-		<library name="lib/kafka_2.10-0.8.2.0.jar"/>
-		<library name="lib/kafka-clients-0.8.2.0.jar"/>
+		<library name="lib/kafka_2.10-0.8.2.1.jar"/>
+		<library name="lib/kafka-clients-0.8.2.1.jar"/>
 		<library name="lib/log4j-1.2.16.jar"/>
 		<library name="lib/lz4-1.2.0.jar"/>
 		<library name="lib/metrics-core-2.2.0.jar"/>
 		<library name="lib/netty-3.7.0.Final.jar"/>
 		<library name="lib/scala-library-2.10.4.jar"/>
-		<library name="lib/slf4j-api-1.7.6.jar"/>
+		<library name="lib/slf4j-api-1.7.2.jar"/>
 		<library name="lib/slf4j-log4j12-1.6.1.jar"/>
 		<library name="lib/snappy-java-1.1.1.6.jar"/>
 		<library name="lib/xercesImpl-2.9.1.jar"/>
