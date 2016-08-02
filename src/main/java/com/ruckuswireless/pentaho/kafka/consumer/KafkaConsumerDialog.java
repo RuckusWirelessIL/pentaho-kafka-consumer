@@ -33,7 +33,7 @@ import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
 /**
  * UI for the Kafka Consumer step
- * 
+ *
  * @author Michael Spector
  */
 public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInterface {
@@ -46,7 +46,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 	private TextVar wLimit;
 	private TextVar wTimeout;
 	private Button wStopOnEmptyTopic;
-	
+
 	public KafkaConsumerDialog(Shell parent, Object in, TransMeta tr, String sname) {
 		super(parent, (BaseStepMeta) in, tr, sname);
 		consumerMeta = (KafkaConsumerMeta) in;
@@ -300,8 +300,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wTopicName.setText(Const.NVL(consumerMeta.getTopic(), ""));
 		wFieldName.setText(Const.NVL(consumerMeta.getField(), ""));
 		wKeyFieldName.setText(Const.NVL(consumerMeta.getKeyField(), ""));
-		wLimit.setText(Long.toString(consumerMeta.getLimit()));
-		wTimeout.setText(Long.toString(consumerMeta.getTimeout()));
+		wLimit.setText(Const.NVL(consumerMeta.getLimit(), ""));
+		wTimeout.setText(Const.NVL(consumerMeta.getTimeout(), ""));
 		wStopOnEmptyTopic.setSelection(consumerMeta.isStopOnEmptyTopic());
 
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();
@@ -337,8 +337,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		consumerMeta.setTopic(wTopicName.getText());
 		consumerMeta.setField(wFieldName.getText());
 		consumerMeta.setKeyField(wKeyFieldName.getText());
-		consumerMeta.setLimit(Const.toLong(wLimit.getText(), 0));
-		consumerMeta.setTimeout(Const.toLong(wTimeout.getText(), 0));
+		consumerMeta.setLimit(wLimit.getText());
+		consumerMeta.setTimeout(wTimeout.getText());
 		consumerMeta.setStopOnEmptyTopic(wStopOnEmptyTopic.getSelection());
 
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();

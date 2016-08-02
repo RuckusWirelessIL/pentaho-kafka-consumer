@@ -11,10 +11,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.KafkaStream;
-
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMeta;
@@ -25,6 +21,10 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+
+import kafka.consumer.Consumer;
+import kafka.consumer.ConsumerConfig;
+import kafka.consumer.KafkaStream;
 
 /**
  * Kafka Consumer step processor
@@ -86,8 +86,11 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 	public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
 		Object[] r = getRow();
 		if (r == null) {
-			/* If we have no input rows, make sure we at least run once to produce output rows.
-			   This allows us to consume without requiring an input step. */
+			/*
+			 * If we have no input rows, make sure we at least run once to
+			 * produce output rows. This allows us to consume without requiring
+			 * an input step.
+			 */
 			if (!first) {
 				setOutputDone();
 				return false;
@@ -116,7 +119,12 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 		}
 
 		try {
-			long timeout = meta.getTimeout();
+			long timeout;
+			try {
+				timeout = Long.parseLong(environmentSubstitute(meta.getTimeout()));
+			} catch (NumberFormatException e) {
+				throw new KettleException("Unable to parse step timeout value", e);
+			}
 
 			logDebug("Starting message consumption with overall timeout of " + timeout + "ms");
 
