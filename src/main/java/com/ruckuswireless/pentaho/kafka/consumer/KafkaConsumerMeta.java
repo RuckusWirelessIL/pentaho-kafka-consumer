@@ -304,4 +304,9 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		keyFieldValueMeta.setOrigin(origin);
 		rowMeta.addValueMeta(keyFieldValueMeta);
 	}
+
+	public static boolean isEmpty(String str) {
+		return str == null || str.length() == 0;
+	}
+
 }

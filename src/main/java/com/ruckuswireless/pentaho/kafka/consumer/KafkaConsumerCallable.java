@@ -37,8 +37,10 @@ public abstract class KafkaConsumerCallable implements Callable<Object> {
 	public Object call() throws KettleException {
 		try {
 			long limit;
+			String strData = meta.getLimit();
+
 			try {
-				limit = Long.parseLong(step.environmentSubstitute(meta.getLimit()));
+				limit = KafkaConsumerMeta.isEmpty(strData) ? 0 : Long.parseLong(step.environmentSubstitute(strData));
 			} catch (NumberFormatException e) {
 				throw new KettleException("Unable to parse messages limit parameter", e);
 			}

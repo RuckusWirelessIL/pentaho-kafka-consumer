@@ -362,7 +362,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 	}
 
 	private void ok() {
-		if (Const.isEmpty(wStepname.getText())) {
+		if (KafkaConsumerMeta.isEmpty(wStepname.getText())) {
 			return;
 		}
 		setData(consumerMeta);

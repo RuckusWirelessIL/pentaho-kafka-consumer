@@ -120,8 +120,10 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 
 		try {
 			long timeout;
+			String strData = meta.getTimeout();
+
 			try {
-				timeout = Long.parseLong(environmentSubstitute(meta.getTimeout()));
+				timeout = KafkaConsumerMeta.isEmpty(strData) ? 0 : Long.parseLong(environmentSubstitute(strData));
 			} catch (NumberFormatException e) {
 				throw new KettleException("Unable to parse step timeout value", e);
 			}
