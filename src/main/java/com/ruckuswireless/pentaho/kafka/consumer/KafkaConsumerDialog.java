@@ -1,6 +1,8 @@
 package com.ruckuswireless.pentaho.kafka.consumer;
 
+import java.util.Arrays;
 import java.util.Properties;
+import java.util.TreeSet;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
@@ -304,11 +306,15 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wTimeout.setText(Const.NVL(consumerMeta.getTimeout(), ""));
 		wStopOnEmptyTopic.setSelection(consumerMeta.isStopOnEmptyTopic());
 
+		TreeSet<String> propNames = new TreeSet<String>();
+		propNames.addAll(Arrays.asList(KafkaConsumerMeta.KAFKA_PROPERTIES_NAMES));
+		propNames.addAll(consumerMeta.getKafkaProperties().stringPropertyNames());
+
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();
-		for (int i = 0; i < KafkaConsumerMeta.KAFKA_PROPERTIES_NAMES.length; ++i) {
-			String propName = KafkaConsumerMeta.KAFKA_PROPERTIES_NAMES[i];
+		int i = 0;
+		for (String propName : propNames) {
 			String value = kafkaProperties.getProperty(propName);
-			TableItem item = new TableItem(wProps.table, i > 1 ? SWT.BOLD : SWT.NONE);
+			TableItem item = new TableItem(wProps.table, i++ > 1 ? SWT.BOLD : SWT.NONE);
 			int colnr = 1;
 			item.setText(colnr++, Const.NVL(propName, ""));
 			String defaultValue = KafkaConsumerMeta.KAFKA_PROPERTIES_DEFAULTS.get(propName);
@@ -317,6 +323,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 			}
 			item.setText(colnr++, Const.NVL(value, defaultValue));
 		}
+
 		wProps.removeEmptyRows();
 		wProps.setRowNums();
 		wProps.optWidth(true);
