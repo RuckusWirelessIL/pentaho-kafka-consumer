@@ -41,8 +41,6 @@
 			<outputDirectory>.</outputDirectory>
 			<includes>
 				<include>*.jar</include>
-				<include>logo.png</include>
-				<include>plugin.xml</include>
 				<include>version.xml</include>
 			</includes>
 		</fileSet>

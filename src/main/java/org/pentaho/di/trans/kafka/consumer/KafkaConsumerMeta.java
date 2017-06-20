@@ -1,4 +1,4 @@
-package com.ruckuswireless.pentaho.kafka.consumer;
+package org.pentaho.di.trans.kafka.consumer;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.CheckResult;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
@@ -39,6 +40,13 @@ import kafka.consumer.ConsumerConfig;
  *
  * @author Michael Spector
  */
+@Step(
+		id = "KafkaConsumer",
+		image = "org/pentaho/di/trans/kafka/consumer/resources/kafka_consumer.png",
+		i18nPackageName="org.pentaho.di.trans.kafka.consumer",
+		name="KafkaConsumerDialog.Shell.Title",
+		description = "KafkaConsumerDialog.Shell.Tooltip",
+		categoryDescription="i18n:org.pentaho.di.trans.step:BaseStep.Category.Input")
 public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface {
 
 	public static final String[] KAFKA_PROPERTIES_NAMES = new String[] { "zookeeper.connect", "group.id", "consumer.id",
@@ -61,7 +69,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private String timeout;
 	private boolean stopOnEmptyTopic;
 
-	Properties getKafkaProperties() {
+	public Properties getKafkaProperties() {
 		return kafkaProperties;
 	}
 
@@ -181,7 +189,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 
 	public StepInterface getStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int cnr, TransMeta transMeta,
 			Trans trans) {
-		return new KafkaConsumerStep(stepMeta, stepDataInterface, cnr, transMeta, trans);
+		return new KafkaConsumer(stepMeta, stepDataInterface, cnr, transMeta, trans);
 	}
 
 	public StepDataInterface getStepData() {

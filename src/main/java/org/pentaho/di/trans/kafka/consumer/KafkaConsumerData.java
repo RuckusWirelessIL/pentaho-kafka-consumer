@@ -1,4 +1,4 @@
-package com.ruckuswireless.pentaho.kafka.consumer;
+package org.pentaho.di.trans.kafka.consumer;
 
 import kafka.consumer.ConsumerIterator;
 import kafka.javaapi.consumer.ConsumerConnector;

@@ -1,4 +1,4 @@
-package com.ruckuswireless.pentaho.kafka.consumer;
+package org.pentaho.di.trans.kafka.consumer;
 
 import java.util.HashMap;
 import java.util.List;
@@ -31,10 +31,10 @@ import kafka.consumer.KafkaStream;
  *
  * @author Michael Spector
  */
-public class KafkaConsumerStep extends BaseStep implements StepInterface {
+public class KafkaConsumer extends BaseStep implements StepInterface {
 	public static final String CONSUMER_TIMEOUT_KEY = "consumer.timeout.ms";
 
-	public KafkaConsumerStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
+	public KafkaConsumer(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
 			Trans trans) {
 		super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
 	}
@@ -58,12 +58,12 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			}
 		} else {
 			if (substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
-				logError(Messages.getString("KafkaConsumerStep.WarnConsumerTimeout"));
+				logError(Messages.getString("KafkaConsumer.WarnConsumerTimeout"));
 			}
 		}
 		ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
 
-		logBasic(Messages.getString("KafkaConsumerStep.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
+		logBasic(Messages.getString("KafkaConsumer.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
 		data.consumer = Consumer.createJavaConsumerConnector(consumerConfig);
 		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
 		String topic = environmentSubstitute(meta.getTopic());
@@ -137,7 +137,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 					putRow(data.outputRowMeta, newRow);
 
 					if (isRowLevel()) {
-						logRowlevel(Messages.getString("KafkaConsumerStep.Log.OutputRow",
+						logRowlevel(Messages.getString("KafkaConsumer.Log.OutputRow",
 								Long.toString(getLinesWritten()), data.outputRowMeta.getString(newRow)));
 					}
 				}
@@ -162,7 +162,7 @@ public class KafkaConsumerStep extends BaseStep implements StepInterface {
 			}
 		} catch (KettleException e) {
 			if (!getStepMeta().isDoingErrorHandling()) {
-				logError(Messages.getString("KafkaConsumerStep.ErrorInStepRunning", e.getMessage()));
+				logError(Messages.getString("KafkaConsumer.ErrorInStepRunning", e.getMessage()));
 				setErrors(1);
 				stopAll();
 				setOutputDone();

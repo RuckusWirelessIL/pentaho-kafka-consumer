@@ -1,4 +1,4 @@
-package com.ruckuswireless.pentaho.kafka.consumer;
+package org.pentaho.di.ui.trans.kafka.consumer;
 
 import java.util.Arrays;
 import java.util.Properties;
@@ -32,6 +32,9 @@ import org.pentaho.di.ui.core.widget.ColumnInfo;
 import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
+
+import org.pentaho.di.trans.kafka.consumer.KafkaConsumerMeta;
+import org.pentaho.di.trans.kafka.consumer.Messages;
 
 /**
  * UI for the Kafka Consumer step

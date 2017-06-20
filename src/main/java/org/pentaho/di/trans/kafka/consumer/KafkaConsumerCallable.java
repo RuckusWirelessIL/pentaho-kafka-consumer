@@ -1,4 +1,4 @@
-package com.ruckuswireless.pentaho.kafka.consumer;
+package org.pentaho.di.trans.kafka.consumer;
 
 import java.util.concurrent.Callable;
 
@@ -16,9 +16,9 @@ public abstract class KafkaConsumerCallable implements Callable<Object> {
 
 	private KafkaConsumerData data;
 	private KafkaConsumerMeta meta;
-	private KafkaConsumerStep step;
+	private KafkaConsumer step;
 
-	public KafkaConsumerCallable(KafkaConsumerMeta meta, KafkaConsumerData data, KafkaConsumerStep step) {
+	public KafkaConsumerCallable(KafkaConsumerMeta meta, KafkaConsumerData data, KafkaConsumer step) {
 		this.meta = meta;
 		this.data = data;
 		this.step = step;
