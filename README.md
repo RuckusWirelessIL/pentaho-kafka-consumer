@@ -15,6 +15,10 @@ Apache Kafka consumer step plug-in for Pentaho Kettle.
 
 The consumer depends on Apache Kafka 0.8.1.1, which means that the broker must be of 0.8.x version or later.
 
+If you want to build the plugin for a different Kafka version you have to
+modify the values of kafka.version and kafka.scala.version in the properties
+section of the pom.xml. 
+
 ### Maximum Duration Of Consumption ###
 
 Note that the maximum duration of consumption is a limit on the duration of the
