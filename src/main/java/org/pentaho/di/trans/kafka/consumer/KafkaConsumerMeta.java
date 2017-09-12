@@ -30,6 +30,7 @@ import org.pentaho.di.trans.step.StepDataInterface;
 import org.pentaho.di.trans.step.StepInterface;
 import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
 import kafka.consumer.ConsumerConfig;
@@ -46,6 +47,8 @@ import kafka.consumer.ConsumerConfig;
 		i18nPackageName="org.pentaho.di.trans.kafka.consumer",
 		name="KafkaConsumerDialog.Shell.Title",
 		description = "KafkaConsumerDialog.Shell.Tooltip",
+		documentationUrl = "KafkaConsumerDialog.Shell.DocumentationURL",
+		casesUrl = "KafkaConsumerDialog.Shell.CasesURL",
 		categoryDescription="i18n:org.pentaho.di.trans.step:BaseStep.Category.Input")
 public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface {
 
@@ -310,7 +313,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	}
 
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
-			VariableSpace space) throws KettleStepException {
+						  VariableSpace space) throws KettleStepException {
 
 		ValueMetaInterface fieldValueMeta = new ValueMeta(getField(), ValueMetaInterface.TYPE_BINARY);
 		fieldValueMeta.setOrigin(origin);
