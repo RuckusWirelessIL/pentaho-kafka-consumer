@@ -49,6 +49,26 @@ public class KafkaConsumerMetaTest {
         hasi18nValue(stepAnnotation.i18nPackageName(), stepAnnotation.casesUrl());
     }
 
+    @Test
+    public void testDefaults() throws KettleStepException {
+        KafkaConsumerMeta m = new KafkaConsumerMeta();
+        m.setDefault();
+
+        RowMetaInterface rowMeta = new RowMeta();
+        m.getFields( rowMeta, "kafka_consumer", null, null, null, null, null );
+
+        // expect two fields to be added to the row stream
+        assertEquals( 2 ,rowMeta.size());
+
+        // those fields must strings and named as configured
+        assertEquals( ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(0).getType() ); // TODO change to string
+        assertEquals( ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(1).getType() ); // TODO change to string
+        assertEquals( ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(0).getStorageType() );
+        assertEquals( ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(1).getStorageType() );
+        // TODO check naming
+        //assertEquals( rowMeta.getFieldNames()[0], m.getOutputField() );
+    }
+
     private void hasi18nValue( String i18nPackageName, String messageId ) {
         String fakeId = UUID.randomUUID().toString();
         String fakeLocalized = BaseMessages.getString( i18nPackageName, fakeId );
