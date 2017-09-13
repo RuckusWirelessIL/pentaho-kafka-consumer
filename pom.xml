@@ -15,7 +15,6 @@
         <kafka.scala.version>2.10</kafka.scala.version>
         <kafka.version>0.8.2.1</kafka.version>
 		<buildId>${maven.build.timestamp}</buildId>
-		<java.version>1.6</java.version>
 		<maven.build.timestamp.format>yyyyMMdd-HHmm</maven.build.timestamp.format>
 	</properties>
 
@@ -130,9 +129,26 @@
 				</executions>
 			</plugin>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
+				<groupId>org.sonarsource.scanner.maven</groupId>
 				<artifactId>sonar-maven-plugin</artifactId>
-				<version>2.7.1</version>
+				<version>3.3.0.603</version>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.7.9</version>
+				<configuration>
+					<destFile>${sonar.jacoco.reportPath}</destFile>
+					<append>true</append>
+				</configuration>
+				<executions>
+					<execution>
+						<id>agent</id>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
 		</plugins>
 
@@ -164,11 +180,6 @@
 						</lifecycleMappingMetadata>
 					</configuration>
 				</plugin>
-				<plugin>
-					<groupId>org.codehaus.mojo</groupId>
-					<artifactId>sonar-maven-plugin</artifactId>
-					<version>2.7.1</version>
-				</plugin>
 			</plugins>
 		</pluginManagement>
 	</build>
@@ -181,7 +192,7 @@
 			</activation>
 			<properties>
 				<sonar.host.url>http://localhost:9000</sonar.host.url>
-				<sonar.java.source>${java.version}</sonar.java.source>
+				<sonar.java.source>${maven.compiler.source}</sonar.java.source>
 			</properties>
 		</profile>
 	</profiles>
