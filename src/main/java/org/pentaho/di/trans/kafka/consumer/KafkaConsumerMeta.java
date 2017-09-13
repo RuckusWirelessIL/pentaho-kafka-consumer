@@ -72,6 +72,10 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private String timeout;
 	private boolean stopOnEmptyTopic;
 
+	public KafkaConsumerMeta() {
+		super();
+	}
+
 	public Properties getKafkaProperties() {
 		return kafkaProperties;
 	}
@@ -199,7 +203,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		return new KafkaConsumerData();
 	}
 
-	public void loadXML(Node stepnode, List<DatabaseMeta> databases, Map<String, Counter> counters)
+	@Override
+	public void loadXML(Node stepnode, List<DatabaseMeta> databases, IMetaStore metaStore)
 			throws KettleXMLException {
 
 		try {
@@ -226,6 +231,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		}
 	}
 
+	@Override
 	public String getXML() throws KettleException {
 		StringBuilder retval = new StringBuilder();
 		if (topic != null) {
@@ -257,7 +263,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		return retval.toString();
 	}
 
-	public void readRep(Repository rep, ObjectId stepId, List<DatabaseMeta> databases, Map<String, Counter> counters)
+	@Override
+	public void readRep(Repository rep, IMetaStore metaStore, ObjectId stepId, List<DatabaseMeta> databases)
 			throws KettleException {
 		try {
 			topic = rep.getStepAttributeString(stepId, "TOPIC");
@@ -282,7 +289,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		}
 	}
 
-	public void saveRep(Repository rep, ObjectId transformationId, ObjectId stepId) throws KettleException {
+	@Override
+	public void saveRep(Repository rep, IMetaStore metaStore, ObjectId transformationId, ObjectId stepId) throws KettleException {
 		try {
 			if (topic != null) {
 				rep.saveStepAttribute(transformationId, stepId, "TOPIC", topic);
@@ -309,7 +317,11 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		}
 	}
 
+	/**
+	 * Set default values to the transformation
+	 */
 	public void setDefault() {
+		setTopic("");
 	}
 
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,

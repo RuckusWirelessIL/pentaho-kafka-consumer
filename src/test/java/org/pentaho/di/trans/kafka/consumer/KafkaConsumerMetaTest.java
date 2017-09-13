@@ -1,6 +1,5 @@
 package org.pentaho.di.trans.kafka.consumer;
 
-import static org.junit.Assert.*;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.Const;
@@ -12,8 +11,11 @@ import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.trans.steps.loadsave.LoadSaveTester;
 
-import java.util.UUID;
+import java.util.*;
+
+import static org.junit.Assert.*;
 
 public class KafkaConsumerMetaTest {
     @BeforeClass
@@ -67,6 +69,23 @@ public class KafkaConsumerMetaTest {
         assertEquals( ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(1).getStorageType() );
         // TODO check naming
         //assertEquals( rowMeta.getFieldNames()[0], m.getOutputField() );
+    }
+
+    @Test
+    public void testLoadSave() throws KettleException {
+
+        List<String> attributes = Arrays.asList("topic");
+
+        Map<String, String> getterMap = new HashMap<String, String>();
+        getterMap.put("topic", "getTopic");
+
+        Map<String, String> setterMap = new HashMap<String, String>();
+        setterMap.put("topic", "setTopic");
+
+        LoadSaveTester tester = new LoadSaveTester(KafkaConsumerMeta.class, attributes, getterMap, setterMap);
+
+        tester.testRepoRoundTrip();
+        tester.testXmlRoundTrip();
     }
 
     private void hasi18nValue( String i18nPackageName, String messageId ) {
