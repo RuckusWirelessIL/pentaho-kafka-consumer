@@ -74,13 +74,21 @@ public class KafkaConsumerMetaTest {
     @Test
     public void testLoadSave() throws KettleException {
 
-        List<String> attributes = Arrays.asList("topic");
+        List<String> attributes = Arrays.asList("topic", "field", "keyField", "limit", "timeout");
 
         Map<String, String> getterMap = new HashMap<String, String>();
         getterMap.put("topic", "getTopic");
+        getterMap.put("field", "getField");
+        getterMap.put("keyField", "getKeyField");
+        getterMap.put("limit", "getLimit");
+        getterMap.put("timeout", "getTimeout");
 
         Map<String, String> setterMap = new HashMap<String, String>();
         setterMap.put("topic", "setTopic");
+        setterMap.put("field", "setField");
+        setterMap.put("keyField", "setKeyField");
+        setterMap.put("limit", "setLimit");
+        setterMap.put("timeout", "setTimeout");
 
         LoadSaveTester tester = new LoadSaveTester(KafkaConsumerMeta.class, attributes, getterMap, setterMap);
 
