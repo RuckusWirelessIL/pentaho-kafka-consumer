@@ -1,17 +1,10 @@
 package org.pentaho.di.trans.kafka.consumer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import org.pentaho.di.core.annotations.Step;
+import kafka.consumer.ConsumerConfig;
 import org.pentaho.di.core.CheckResult;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.Counter;
+import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
@@ -25,15 +18,13 @@ import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.step.BaseStepMeta;
-import org.pentaho.di.trans.step.StepDataInterface;
-import org.pentaho.di.trans.step.StepInterface;
-import org.pentaho.di.trans.step.StepMeta;
-import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.trans.step.*;
 import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
-import kafka.consumer.ConsumerConfig;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
 
 /**
  * Kafka Consumer step definitions and serializer to/from XML and to/from Kettle
@@ -78,6 +69,20 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 
 	public Properties getKafkaProperties() {
 		return kafkaProperties;
+	}
+
+	public Map<String, String> getKafkaPropertiesMap() {
+		return (Map)getKafkaProperties();
+	}
+
+	public void setKafkaProperties(Properties kafkaProperties) {
+		this.kafkaProperties = kafkaProperties;
+	}
+
+	public void setKafkaPropertiesMap(Map<String, String> propertiesMap) {
+		Properties props = new Properties();
+		props.putAll(propertiesMap);
+		setKafkaProperties(props);
 	}
 
 	/**

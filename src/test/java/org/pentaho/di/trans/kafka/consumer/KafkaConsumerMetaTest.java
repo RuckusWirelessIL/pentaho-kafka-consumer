@@ -11,9 +11,14 @@ import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
 import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.trans.steps.getsubfolders.GetSubFoldersMeta;
 import org.pentaho.di.trans.steps.loadsave.LoadSaveTester;
+import org.pentaho.di.trans.steps.loadsave.validator.FieldLoadSaveValidator;
+import org.pentaho.di.trans.steps.loadsave.validator.MapLoadSaveValidator;
+import org.pentaho.di.trans.steps.loadsave.validator.StringLoadSaveValidator;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
@@ -74,7 +79,7 @@ public class KafkaConsumerMetaTest {
     @Test
     public void testLoadSave() throws KettleException {
 
-        List<String> attributes = Arrays.asList("topic", "field", "keyField", "limit", "timeout");
+        List<String> attributes = Arrays.asList("topic", "field", "keyField", "limit", "timeout", "kafka", "stopOnEmptyTopic");
 
         Map<String, String> getterMap = new HashMap<String, String>();
         getterMap.put("topic", "getTopic");
@@ -82,6 +87,8 @@ public class KafkaConsumerMetaTest {
         getterMap.put("keyField", "getKeyField");
         getterMap.put("limit", "getLimit");
         getterMap.put("timeout", "getTimeout");
+        getterMap.put("kafka", "getKafkaPropertiesMap");
+        getterMap.put("stopOnEmptyTopic", "isStopOnEmptyTopic");
 
         Map<String, String> setterMap = new HashMap<String, String>();
         setterMap.put("topic", "setTopic");
@@ -89,11 +96,30 @@ public class KafkaConsumerMetaTest {
         setterMap.put("keyField", "setKeyField");
         setterMap.put("limit", "setLimit");
         setterMap.put("timeout", "setTimeout");
+        setterMap.put("kafka", "setKafkaPropertiesMap");
+        setterMap.put("stopOnEmptyTopic", "setStopOnEmptyTopic");
 
-        LoadSaveTester tester = new LoadSaveTester(KafkaConsumerMeta.class, attributes, getterMap, setterMap);
+        Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorAttributeMap =
+                new HashMap<String, FieldLoadSaveValidator<?>>();
+        Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorTypeMap =
+                new HashMap<String, FieldLoadSaveValidator<?>>();
+        fieldLoadSaveValidatorAttributeMap.put( "kafka", new MapLoadSaveValidator<String, String>(
+                new KeyStringLoadSaveValidator(), new StringLoadSaveValidator() ) );
+
+        LoadSaveTester tester = new LoadSaveTester(KafkaConsumerMeta.class, attributes, getterMap, setterMap, fieldLoadSaveValidatorAttributeMap, fieldLoadSaveValidatorTypeMap);
 
         tester.testRepoRoundTrip();
         tester.testXmlRoundTrip();
+    }
+
+    /**
+     * Private class to generate alphabetic xml tags
+     */
+    private class KeyStringLoadSaveValidator extends StringLoadSaveValidator {
+        @Override
+        public String getTestObject() {
+            return "k"+ UUID.randomUUID().toString();
+        }
     }
 
     private void hasi18nValue( String i18nPackageName, String messageId ) {
@@ -106,4 +132,5 @@ public class KafkaConsumerMetaTest {
         assertFalse( Const.isEmpty( localized ) );
         assertNotEquals( "!" + messageId + "!", localized );
     }
+
 }
