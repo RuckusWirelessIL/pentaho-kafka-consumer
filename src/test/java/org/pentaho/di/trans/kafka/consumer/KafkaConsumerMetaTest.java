@@ -2,6 +2,7 @@ package org.pentaho.di.trans.kafka.consumer;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
+import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.annotations.Step;
@@ -10,9 +11,13 @@ import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.i18n.BaseMessages;
+import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.step.StepMeta;
 import org.pentaho.di.trans.steps.getsubfolders.GetSubFoldersMeta;
 import org.pentaho.di.trans.steps.loadsave.LoadSaveTester;
+import org.pentaho.di.trans.steps.loadsave.MemoryRepository;
 import org.pentaho.di.trans.steps.loadsave.validator.FieldLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.MapLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.StringLoadSaveValidator;
@@ -110,6 +115,43 @@ public class KafkaConsumerMetaTest {
 
         tester.testRepoRoundTrip();
         tester.testXmlRoundTrip();
+    }
+
+    @Test
+    public  void testChecks() {
+        KafkaConsumerMeta m = new KafkaConsumerMeta();
+
+        // Test missing Topic name
+        List<CheckResultInterface> checkResults = new ArrayList<CheckResultInterface>();
+        m.check( checkResults, new TransMeta(), new StepMeta(), null, null, null, null, new Variables(), new MemoryRepository(), null );
+        assertFalse( checkResults.isEmpty() );
+        boolean foundMatch = false;
+        for ( CheckResultInterface result : checkResults ) {
+            if ( result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
+                    && result.getText().equals( BaseMessages.getString( KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidTopic" ) ) ) {
+                foundMatch = true;
+            }
+        }
+        assertTrue( "The step checks should fail if input topic is not given", foundMatch );
+
+        // Test missing field name
+        foundMatch = false;
+        for ( CheckResultInterface result : checkResults ) {
+            if ( result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
+                    && result.getText().equals( BaseMessages.getString( KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidField" ) ) ) {
+                foundMatch = true;
+            }
+        }
+        assertTrue( "The step checks should fail if no field is not given", foundMatch );
+
+        foundMatch = false;
+        for ( CheckResultInterface result : checkResults ) {
+            if ( result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
+                    && result.getText().equals( BaseMessages.getString( KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidKeyField" ) ) ) {
+                foundMatch = true;
+            }
+        }
+        assertTrue( "The step checks should fail if no key is not given", foundMatch );
     }
 
     /**

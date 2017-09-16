@@ -178,7 +178,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	}
 
 	public void check(List<CheckResultInterface> remarks, TransMeta transMeta, StepMeta stepMeta, RowMetaInterface prev,
-			String input[], String output[], RowMetaInterface info) {
+			String input[], String output[], RowMetaInterface info, VariableSpace space, Repository repository,
+					  IMetaStore metaStore) {
 
 		if (topic == null) {
 			remarks.add(new CheckResult(CheckResultInterface.TYPE_RESULT_ERROR,
