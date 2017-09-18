@@ -11,7 +11,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<maven.compiler.target>1.6</maven.compiler.target>
 		<maven.compiler.source>1.6</maven.compiler.source>
-        <kettle.version>6.1.0.2-208</kettle.version>
+		<kettle.version>8.0-SNAPSHOT</kettle.version>
         <kafka.scala.version>2.10</kafka.scala.version>
         <kafka.version>0.8.2.1</kafka.version>
 		<buildId>${maven.build.timestamp}</buildId>
@@ -21,7 +21,7 @@
 	<repositories>
 		<repository>
 			<id>pentaho-releases</id>
-			<url>http://repository.pentaho.org/artifactory/repo/</url>
+			<url>http://nexus.pentaho.org/content/groups/omni</url>
 		</repository>
 		<repository>
 			<id>swt-repo</id>
@@ -51,6 +51,12 @@
 		</dependency>
 		<dependency>
 			<groupId>pentaho-kettle</groupId>
+			<artifactId>kettle-core</artifactId>
+			<version>${kettle.version}</version>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>pentaho-kettle</groupId>
 			<artifactId>kettle-engine</artifactId>
 			<version>${kettle.version}</version>
 			<scope>provided</scope>
@@ -62,9 +68,22 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
+			<groupId>pentaho-kettle</groupId>
+			<artifactId>kettle-engine</artifactId>
+			<version>${kettle.version}</version>
+			<classifier>tests</classifier>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<version>4.12</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.mockito</groupId>
+			<artifactId>mockito-all</artifactId>
+			<version>1.10.19</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

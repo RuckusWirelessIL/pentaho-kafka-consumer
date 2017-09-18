@@ -3,7 +3,6 @@ package org.pentaho.di.trans.kafka.consumer;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.pentaho.di.core.CheckResultInterface;
-import org.pentaho.di.core.Const;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.exception.KettleException;
@@ -11,6 +10,7 @@ import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.core.row.RowMetaInterface;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.util.Utils;
 import org.pentaho.di.core.variables.Variables;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
@@ -44,14 +44,14 @@ public class KafkaConsumerMetaTest {
         // PDI Plugin Annotation-based Classloader checks
         Step stepAnnotation = KafkaConsumerMeta.class.getAnnotation(Step.class);
         assertNotNull(stepAnnotation);
-        assertFalse(Const.isEmpty(stepAnnotation.id()));
-        assertFalse(Const.isEmpty(stepAnnotation.name()));
-        assertFalse(Const.isEmpty(stepAnnotation.description()));
-        assertFalse(Const.isEmpty(stepAnnotation.image()));
-        assertFalse(Const.isEmpty(stepAnnotation.categoryDescription()));
-        assertFalse(Const.isEmpty(stepAnnotation.i18nPackageName()));
-        assertFalse(Const.isEmpty(stepAnnotation.documentationUrl()));
-        assertFalse(Const.isEmpty(stepAnnotation.casesUrl()));
+        assertFalse(Utils.isEmpty(stepAnnotation.id()));
+        assertFalse(Utils.isEmpty(stepAnnotation.name()));
+        assertFalse(Utils.isEmpty(stepAnnotation.description()));
+        assertFalse(Utils.isEmpty(stepAnnotation.image()));
+        assertFalse(Utils.isEmpty(stepAnnotation.categoryDescription()));
+        assertFalse(Utils.isEmpty(stepAnnotation.i18nPackageName()));
+        assertFalse(Utils.isEmpty(stepAnnotation.documentationUrl()));
+        assertFalse(Utils.isEmpty(stepAnnotation.casesUrl()));
         assertEquals(KafkaConsumerMeta.class.getPackage().getName(), stepAnnotation.i18nPackageName());
         hasi18nValue(stepAnnotation.i18nPackageName(), stepAnnotation.name());
         hasi18nValue(stepAnnotation.i18nPackageName(), stepAnnotation.description());
@@ -111,8 +111,7 @@ public class KafkaConsumerMetaTest {
 
         LoadSaveTester tester = new LoadSaveTester(KafkaConsumerMeta.class, attributes, getterMap, setterMap, fieldLoadSaveValidatorAttributeMap, fieldLoadSaveValidatorTypeMap);
 
-        tester.testRepoRoundTrip();
-        tester.testXmlRoundTrip();
+        tester.testSerialization();
     }
 
     @Test
@@ -218,7 +217,7 @@ public class KafkaConsumerMetaTest {
 
         // Real Test
         String localized = BaseMessages.getString( i18nPackageName, messageId );
-        assertFalse( Const.isEmpty( localized ) );
+        assertFalse(Utils.isEmpty(localized));
         assertNotEquals( "!" + messageId + "!", localized );
     }
 
