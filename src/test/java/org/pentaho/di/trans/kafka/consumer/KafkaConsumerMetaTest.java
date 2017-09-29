@@ -26,6 +26,7 @@ import java.util.*;
 import static org.junit.Assert.*;
 
 public class KafkaConsumerMetaTest {
+
     @BeforeClass
     public static void setUpBeforeClass() throws KettleException
     {
