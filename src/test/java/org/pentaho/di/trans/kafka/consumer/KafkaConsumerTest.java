@@ -28,8 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.*;
 
 @PowerMockIgnore("javax.management.*")
@@ -37,20 +36,19 @@ import static org.mockito.Mockito.*;
 @PrepareForTest({Consumer.class})
 public class KafkaConsumerTest {
 
-    static final String STEP_NAME = "Kafka Step";
+    private static final String STEP_NAME = "Kafka Step";
 
     @Mock
-    Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap;
+    private Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap;
     @Mock
-    KafkaStream<byte[], byte[]> kafkaStream;
+    private KafkaStream<byte[], byte[]> kafkaStream;
     @Mock
-    ZookeeperConsumerConnector zookeeperConsumerConnector;
+    private ZookeeperConsumerConnector zookeeperConsumerConnector;
     @Mock
-    ConsumerIterator<byte[], byte[]> streamIterator;
+    private ConsumerIterator<byte[], byte[]> streamIterator;
     @Mock
-    List<KafkaStream<byte[], byte[]>> stream;
+    private List<KafkaStream<byte[], byte[]>> stream;
 
-    private KafkaConsumer step;
     private StepMeta stepMeta;
     private KafkaConsumerMeta meta;
     private KafkaConsumerData data;
@@ -84,7 +82,7 @@ public class KafkaConsumerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void stepInitConfigIssue() throws Exception {
-        step = new KafkaConsumer(stepMeta, data, 1, transMeta, trans);
+        KafkaConsumer step = new KafkaConsumer(stepMeta, data, 1, transMeta, trans);
         meta.setKafkaProperties(new Properties());
 
         step.init(meta, data);
@@ -95,8 +93,10 @@ public class KafkaConsumerTest {
         meta.setTimeout("aaa");
         TransMeta tm = TransTestFactory.generateTestTransformation(new Variables(), meta, STEP_NAME);
 
-        List<RowMetaAndData> result = TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
+        TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
                 STEP_NAME, TransTestFactory.DUMMY_STEPNAME, new ArrayList<RowMetaAndData>());
+
+        assertTrue("Should not arrive here", false);
     }
 
     // If the step does not receive any rows, the transformation should still run successfully
