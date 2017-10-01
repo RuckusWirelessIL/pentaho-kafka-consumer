@@ -90,6 +90,15 @@ public class KafkaConsumerTest {
         step.init(meta, data);
     }
 
+    @Test(expected = KettleException.class)
+    public void illegalTimeout() throws KettleException {
+        meta.setTimeout("aaa");
+        TransMeta tm = TransTestFactory.generateTestTransformation(new Variables(), meta, STEP_NAME);
+
+        List<RowMetaAndData> result = TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
+                STEP_NAME, TransTestFactory.DUMMY_STEPNAME, new ArrayList<RowMetaAndData>());
+    }
+
     // If the step does not receive any rows, the transformation should still run successfully
     @Test
     public void testNoInput() throws KettleException {
