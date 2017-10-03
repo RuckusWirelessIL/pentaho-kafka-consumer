@@ -56,8 +56,6 @@ public class KafkaConsumerTest {
     private TransMeta transMeta;
     private Trans trans;
 
-    private ArgumentCaptor<ConsumerConfig> consumerConfig;
-
     @BeforeClass
     public static void setUpBeforeClass() throws KettleException {
         KettleEnvironment.init(false);
@@ -112,7 +110,7 @@ public class KafkaConsumerTest {
                 STEP_NAME, TransTestFactory.DUMMY_STEPNAME, new ArrayList<RowMetaAndData>());
 
         PowerMockito.verifyStatic(Consumer.class);
-        consumerConfig = ArgumentCaptor.forClass(ConsumerConfig.class);
+        ArgumentCaptor<ConsumerConfig> consumerConfig = ArgumentCaptor.forClass(ConsumerConfig.class);
         Consumer.createJavaConsumerConnector(consumerConfig.capture());
 
         assertEquals(1000, consumerConfig.getValue().consumerTimeoutMs());
