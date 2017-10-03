@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.pentaho.di.core.KettleEnvironment;
 import org.pentaho.di.core.RowMetaAndData;
@@ -55,6 +56,8 @@ public class KafkaConsumerTest {
     private TransMeta transMeta;
     private Trans trans;
 
+    private ArgumentCaptor<ConsumerConfig> consumerConfig;
+
     @BeforeClass
     public static void setUpBeforeClass() throws KettleException {
         KettleEnvironment.init(false);
@@ -96,7 +99,23 @@ public class KafkaConsumerTest {
         TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
                 STEP_NAME, TransTestFactory.DUMMY_STEPNAME, new ArrayList<RowMetaAndData>());
 
-        assertTrue("Should not arrive here", false);
+        fail("Invalid timeout value should lead to exception");
+    }
+
+    @Test
+    public void withStopOnEmptyTopic() throws KettleException {
+
+        meta.setStopOnEmptyTopic(true);
+        TransMeta tm = TransTestFactory.generateTestTransformation(new Variables(), meta, STEP_NAME);
+
+        TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
+                STEP_NAME, TransTestFactory.DUMMY_STEPNAME, new ArrayList<RowMetaAndData>());
+
+        PowerMockito.verifyStatic(Consumer.class);
+        consumerConfig = ArgumentCaptor.forClass(ConsumerConfig.class);
+        Consumer.createJavaConsumerConnector(consumerConfig.capture());
+
+        assertEquals(1000, consumerConfig.getValue().consumerTimeoutMs());
     }
 
     // If the step does not receive any rows, the transformation should still run successfully
