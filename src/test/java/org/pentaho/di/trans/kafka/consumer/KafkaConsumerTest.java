@@ -65,12 +65,26 @@ public class KafkaConsumerTest {
         KettleEnvironment.init(false);
     }
 
-    private static Properties getDefaultKafkaProperties() {
-        Properties p = new Properties();
-        p.put("zookeeper.connect", "");
-        p.put("group.id", "");
+    @Before
+    public void setUp() {
+        data = new KafkaConsumerData();
+        meta = new KafkaConsumerMeta();
+        meta.setKafkaProperties(getDefaultKafkaProperties());
+        meta.setLimit(STEP_LIMIT);
 
-        return p;
+        stepMeta = new StepMeta("KafkaConsumer", meta);
+        transMeta = new TransMeta();
+        transMeta.addStep(stepMeta);
+        trans = new Trans(transMeta);
+
+        PowerMockito.mockStatic(Consumer.class);
+
+        when(Consumer.createJavaConsumerConnector(any(ConsumerConfig.class))).thenReturn(zookeeperConsumerConnector);
+        when(zookeeperConsumerConnector.createMessageStreams(anyMapOf(String.class, Integer.class))).thenReturn(streamsMap);
+        when(streamsMap.get(anyString())).thenReturn(stream);
+        when(stream.get(anyInt())).thenReturn(kafkaStream);
+        when(kafkaStream.iterator()).thenReturn(streamIterator);
+        when(streamIterator.next()).thenReturn(generateKafkaMessage());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -120,6 +134,35 @@ public class KafkaConsumerTest {
         assertEquals(0, result.size());
     }
 
+    // If the step receives rows without any fields, there should be a two output fields (key + value) on each row
+    @Test
+    public void testInputNoFields() throws KettleException {
+        meta.setKeyField("aKeyField");
+        meta.setField("aField");
+
+        when(streamIterator.hasNext()).thenReturn(true);
+
+        TransMeta tm = TransTestFactory.generateTestTransformation(new Variables(), meta, STEP_NAME);
+
+        List<RowMetaAndData> result = TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
+                STEP_NAME, TransTestFactory.DUMMY_STEPNAME, generateInputData(2, false));
+
+        assertNotNull(result);
+        assertEquals(Integer.parseInt(STEP_LIMIT), result.size());
+        for (int i = 0; i < Integer.parseInt(STEP_LIMIT); i++) {
+            assertEquals(2, result.get(i).size());
+            assertEquals("aMessage", result.get(i).getString(0, "default value"));
+        }
+    }
+
+    private static Properties getDefaultKafkaProperties() {
+        Properties p = new Properties();
+        p.put("zookeeper.connect", "");
+        p.put("group.id", "");
+
+        return p;
+    }
+
     /**
      * @param rowCount  The number of rows that should be returned
      * @param hasFields Whether a "UUID" field should be added to each row
@@ -149,46 +192,4 @@ public class KafkaConsumerTest {
                 0, new DefaultDecoder(null), new DefaultDecoder(null));
     }
 
-    @Before
-    public void setUp() {
-        data = new KafkaConsumerData();
-        meta = new KafkaConsumerMeta();
-        meta.setKafkaProperties(getDefaultKafkaProperties());
-        meta.setLimit(STEP_LIMIT);
-
-        stepMeta = new StepMeta("KafkaConsumer", meta);
-        transMeta = new TransMeta();
-        transMeta.addStep(stepMeta);
-        trans = new Trans(transMeta);
-
-        PowerMockito.mockStatic(Consumer.class);
-
-        when(Consumer.createJavaConsumerConnector(any(ConsumerConfig.class))).thenReturn(zookeeperConsumerConnector);
-        when(zookeeperConsumerConnector.createMessageStreams(anyMapOf(String.class, Integer.class))).thenReturn(streamsMap);
-        when(streamsMap.get(anyString())).thenReturn(stream);
-        when(stream.get(anyInt())).thenReturn(kafkaStream);
-        when(kafkaStream.iterator()).thenReturn(streamIterator);
-        when(streamIterator.next()).thenReturn(generateKafkaMessage());
-    }
-
-    // If the step receives rows without any fields, there should be a two output fields (key + value) on each row
-    @Test
-    public void testInputNoFields() throws KettleException {
-        meta.setKeyField("aKeyField");
-        meta.setField("aField");
-
-        when(streamIterator.hasNext()).thenReturn(true);
-
-        TransMeta tm = TransTestFactory.generateTestTransformation(new Variables(), meta, STEP_NAME);
-
-        List<RowMetaAndData> result = TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
-                STEP_NAME, TransTestFactory.DUMMY_STEPNAME, generateInputData(2, false));
-
-        assertNotNull(result);
-        assertEquals(Integer.parseInt(STEP_LIMIT), result.size());
-        for (int i = 0; i < Integer.parseInt(STEP_LIMIT); i++) {
-            assertEquals(2, result.get(i).size());
-            assertEquals("aMessage", result.get(i).getString(0, "default value"));
-        }
-    }
 }
