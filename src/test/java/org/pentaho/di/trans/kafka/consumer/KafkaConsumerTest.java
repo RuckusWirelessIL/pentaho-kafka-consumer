@@ -106,6 +106,17 @@ public class KafkaConsumerTest {
         fail("Invalid timeout value should lead to exception");
     }
 
+    @Test(expected = KettleException.class)
+    public void invalidLimit() throws KettleException {
+        meta.setLimit("aaa");
+        TransMeta tm = TransTestFactory.generateTestTransformation(new Variables(), meta, STEP_NAME);
+
+        TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
+                STEP_NAME, TransTestFactory.DUMMY_STEPNAME, new ArrayList<RowMetaAndData>());
+
+        fail("Invalid limit value should lead to exception");
+    }
+
     @Test
     public void withStopOnEmptyTopic() throws KettleException {
 
@@ -152,6 +163,27 @@ public class KafkaConsumerTest {
         for (int i = 0; i < Integer.parseInt(STEP_LIMIT); i++) {
             assertEquals(2, result.get(i).size());
             assertEquals("aMessage", result.get(i).getString(0, "default value"));
+        }
+    }
+
+    // If the step receives rows without any fields, there should be a two output fields (key + value) on each row
+    @Test
+    public void testInputFields() throws KettleException {
+        meta.setKeyField("aKeyField");
+        meta.setField("aField");
+
+        when(streamIterator.hasNext()).thenReturn(true);
+
+        TransMeta tm = TransTestFactory.generateTestTransformation(new Variables(), meta, STEP_NAME);
+
+        List<RowMetaAndData> result = TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
+                STEP_NAME, TransTestFactory.DUMMY_STEPNAME, generateInputData(3, true));
+
+        assertNotNull(result);
+        assertEquals(Integer.parseInt(STEP_LIMIT), result.size());
+        for (int i = 0; i < Integer.parseInt(STEP_LIMIT); i++) {
+            assertEquals(3, result.get(i).size());
+            assertEquals("aMessage", result.get(i).getString(1, "default value"));
         }
     }
 
