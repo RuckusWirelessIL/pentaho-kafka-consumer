@@ -44,7 +44,7 @@ public class KafkaConsumerTest {
     private static final String STEP_LIMIT = "10000";
 
     @Mock
-    private Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap;
+    private HashMap<String, List<KafkaStream<byte[], byte[]>>> streamsMap;
     @Mock
     private KafkaStream<byte[], byte[]> kafkaStream;
     @Mock
@@ -52,7 +52,7 @@ public class KafkaConsumerTest {
     @Mock
     private ConsumerIterator<byte[], byte[]> streamIterator;
     @Mock
-    private List<KafkaStream<byte[], byte[]>> stream;
+    private ArrayList<KafkaStream<byte[], byte[]>> stream;
 
     private StepMeta stepMeta;
     private KafkaConsumerMeta meta;
@@ -81,7 +81,7 @@ public class KafkaConsumerTest {
 
         when(Consumer.createJavaConsumerConnector(any(ConsumerConfig.class))).thenReturn(zookeeperConsumerConnector);
         when(zookeeperConsumerConnector.createMessageStreams(anyMapOf(String.class, Integer.class))).thenReturn(streamsMap);
-        when(streamsMap.get(anyString())).thenReturn(stream);
+        when(streamsMap.get(anyObject())).thenReturn(stream);
         when(stream.get(anyInt())).thenReturn(kafkaStream);
         when(kafkaStream.iterator()).thenReturn(streamIterator);
         when(streamIterator.next()).thenReturn(generateKafkaMessage());
@@ -126,7 +126,7 @@ public class KafkaConsumerTest {
         TransTestFactory.executeTestTransformation(tm, TransTestFactory.INJECTOR_STEPNAME,
                 STEP_NAME, TransTestFactory.DUMMY_STEPNAME, new ArrayList<RowMetaAndData>());
 
-        PowerMockito.verifyStatic(Consumer.class);
+        PowerMockito.verifyStatic();
         ArgumentCaptor<ConsumerConfig> consumerConfig = ArgumentCaptor.forClass(ConsumerConfig.class);
         Consumer.createJavaConsumerConnector(consumerConfig.capture());
 
