@@ -115,7 +115,7 @@ public class KafkaConsumer extends BaseStep implements StepInterface {
 			} else {
 				data.outputRowMeta = getInputRowMeta().clone();
 			}
-			meta.getFields(data.outputRowMeta, getStepname(), null, null, this);
+			meta.getFields(data.outputRowMeta, getStepname(), null, null, this, null, null);
 		}
 
 		try {

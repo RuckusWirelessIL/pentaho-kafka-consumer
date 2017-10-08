@@ -4,3 +4,7 @@
 *.ear
 /target
 /TAGS
+
+# IntelliJ files
+.idea/
+*.iml

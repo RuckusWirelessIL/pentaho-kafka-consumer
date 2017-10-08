@@ -1,17 +1,10 @@
 package org.pentaho.di.trans.kafka.consumer;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
-
-import org.pentaho.di.core.annotations.Step;
+import kafka.consumer.ConsumerConfig;
 import org.pentaho.di.core.CheckResult;
 import org.pentaho.di.core.CheckResultInterface;
 import org.pentaho.di.core.Const;
-import org.pentaho.di.core.Counter;
+import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
 import org.pentaho.di.core.exception.KettleStepException;
@@ -25,14 +18,13 @@ import org.pentaho.di.repository.ObjectId;
 import org.pentaho.di.repository.Repository;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.step.BaseStepMeta;
-import org.pentaho.di.trans.step.StepDataInterface;
-import org.pentaho.di.trans.step.StepInterface;
-import org.pentaho.di.trans.step.StepMeta;
-import org.pentaho.di.trans.step.StepMetaInterface;
+import org.pentaho.di.trans.step.*;
+import org.pentaho.metastore.api.IMetaStore;
 import org.w3c.dom.Node;
 
-import kafka.consumer.ConsumerConfig;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
 
 /**
  * Kafka Consumer step definitions and serializer to/from XML and to/from Kettle
@@ -46,6 +38,8 @@ import kafka.consumer.ConsumerConfig;
 		i18nPackageName="org.pentaho.di.trans.kafka.consumer",
 		name="KafkaConsumerDialog.Shell.Title",
 		description = "KafkaConsumerDialog.Shell.Tooltip",
+		documentationUrl = "KafkaConsumerDialog.Shell.DocumentationURL",
+		casesUrl = "KafkaConsumerDialog.Shell.CasesURL",
 		categoryDescription="i18n:org.pentaho.di.trans.step:BaseStep.Category.Input")
 public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface {
 
@@ -69,8 +63,26 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private String timeout;
 	private boolean stopOnEmptyTopic;
 
+	public KafkaConsumerMeta() {
+		super();
+	}
+
 	public Properties getKafkaProperties() {
 		return kafkaProperties;
+	}
+
+	public Map<String, String> getKafkaPropertiesMap() {
+		return (Map)getKafkaProperties();
+	}
+
+	public void setKafkaProperties(Properties kafkaProperties) {
+		this.kafkaProperties = kafkaProperties;
+	}
+
+	public void setKafkaPropertiesMap(Map<String, String> propertiesMap) {
+		Properties props = new Properties();
+		props.putAll(propertiesMap);
+		setKafkaProperties(props);
 	}
 
 	/**
@@ -166,7 +178,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	}
 
 	public void check(List<CheckResultInterface> remarks, TransMeta transMeta, StepMeta stepMeta, RowMetaInterface prev,
-			String input[], String output[], RowMetaInterface info) {
+			String input[], String output[], RowMetaInterface info, VariableSpace space, Repository repository,
+					  IMetaStore metaStore) {
 
 		if (topic == null) {
 			remarks.add(new CheckResult(CheckResultInterface.TYPE_RESULT_ERROR,
@@ -196,7 +209,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		return new KafkaConsumerData();
 	}
 
-	public void loadXML(Node stepnode, List<DatabaseMeta> databases, Map<String, Counter> counters)
+	@Override
+	public void loadXML(Node stepnode, List<DatabaseMeta> databases, IMetaStore metaStore)
 			throws KettleXMLException {
 
 		try {
@@ -223,6 +237,7 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		}
 	}
 
+	@Override
 	public String getXML() throws KettleException {
 		StringBuilder retval = new StringBuilder();
 		if (topic != null) {
@@ -254,7 +269,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		return retval.toString();
 	}
 
-	public void readRep(Repository rep, ObjectId stepId, List<DatabaseMeta> databases, Map<String, Counter> counters)
+	@Override
+	public void readRep(Repository rep, IMetaStore metaStore, ObjectId stepId, List<DatabaseMeta> databases)
 			throws KettleException {
 		try {
 			topic = rep.getStepAttributeString(stepId, "TOPIC");
@@ -279,7 +295,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		}
 	}
 
-	public void saveRep(Repository rep, ObjectId transformationId, ObjectId stepId) throws KettleException {
+	@Override
+	public void saveRep(Repository rep, IMetaStore metaStore, ObjectId transformationId, ObjectId stepId) throws KettleException {
 		try {
 			if (topic != null) {
 				rep.saveStepAttribute(transformationId, stepId, "TOPIC", topic);
@@ -306,11 +323,15 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		}
 	}
 
+	/**
+	 * Set default values to the transformation
+	 */
 	public void setDefault() {
+		setTopic("");
 	}
 
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
-			VariableSpace space) throws KettleStepException {
+						  VariableSpace space, Repository repository, IMetaStore metaStore) throws KettleStepException {
 
 		ValueMetaInterface fieldValueMeta = new ValueMeta(getField(), ValueMetaInterface.TYPE_BINARY);
 		fieldValueMeta.setOrigin(origin);
