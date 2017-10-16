@@ -2,8 +2,11 @@ package org.pentaho.di.trans.kafka.consumer;
 
 import org.pentaho.di.i18n.BaseMessages;
 
+@SuppressWarnings("unused")
 public class Messages {
-	public static final Class<?> clazz = Messages.class;
+	private Messages() { }
+
+	private static final Class<?> clazz = Messages.class;
 
 	public static String getString(String key) {
 		return BaseMessages.getString(clazz, key);
