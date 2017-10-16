@@ -7,11 +7,12 @@ import org.pentaho.di.core.Const;
 import org.pentaho.di.core.annotations.Step;
 import org.pentaho.di.core.database.DatabaseMeta;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettlePluginException;
 import org.pentaho.di.core.exception.KettleStepException;
 import org.pentaho.di.core.exception.KettleXMLException;
 import org.pentaho.di.core.row.RowMetaInterface;
-import org.pentaho.di.core.row.ValueMeta;
 import org.pentaho.di.core.row.ValueMetaInterface;
+import org.pentaho.di.core.row.value.ValueMetaFactory;
 import org.pentaho.di.core.variables.VariableSpace;
 import org.pentaho.di.core.xml.XMLHandler;
 import org.pentaho.di.repository.ObjectId;
@@ -24,7 +25,10 @@ import org.w3c.dom.Node;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * Kafka Consumer step definitions and serializer to/from XML and to/from Kettle
@@ -43,13 +47,25 @@ import java.util.*;
 		categoryDescription="i18n:org.pentaho.di.trans.step:BaseStep.Category.Input")
 public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface {
 
-	public static final String[] KAFKA_PROPERTIES_NAMES = new String[] { "zookeeper.connect", "group.id", "consumer.id",
-			"socket.timeout.ms", "socket.receive.buffer.bytes", "fetch.message.max.bytes", "auto.commit.interval.ms",
+    @SuppressWarnings("WeakerAccess")
+    protected static final String[] KAFKA_PROPERTIES_NAMES = new String[]{"zookeeper.connect", "group.id", "consumer.id",
+            "socket.timeout.ms", "socket.receive.buffer.bytes", "fetch.message.max.bytes", "auto.commit.interval.ms",
 			"queued.max.message.chunks", "rebalance.max.retries", "fetch.min.bytes", "fetch.wait.max.ms",
 			"rebalance.backoff.ms", "refresh.leader.backoff.ms", "auto.commit.enable", "auto.offset.reset",
 			"consumer.timeout.ms", "client.id", "zookeeper.session.timeout.ms", "zookeeper.connection.timeout.ms",
 			"zookeeper.sync.time.ms" };
-	public static final Map<String, String> KAFKA_PROPERTIES_DEFAULTS = new HashMap<String, String>();
+
+    @SuppressWarnings("WeakerAccess")
+    protected static final Map<String, String> KAFKA_PROPERTIES_DEFAULTS = new HashMap<String, String>();
+
+    private static final String ATTR_TOPIC = "TOPIC";
+    private static final String ATTR_FIELD = "FIELD";
+    private static final String ATTR_KEY_FIELD = "KEY_FIELD";
+    private static final String ATTR_LIMIT = "LIMIT";
+    private static final String ATTR_TIMEOUT = "TIMEOUT";
+    private static final String ATTR_STOP_ON_EMPTY_TOPIC = "STOP_ON_EMPTY_TOPIC";
+    private static final String ATTR_KAFKA = "KAFKA";
+
 	static {
 		KAFKA_PROPERTIES_DEFAULTS.put("zookeeper.connect", "localhost:2181");
 		KAFKA_PROPERTIES_DEFAULTS.put("group.id", "group");
@@ -63,6 +79,14 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	private String timeout;
 	private boolean stopOnEmptyTopic;
 
+    public static String[] getKafkaPropertiesNames() {
+        return KAFKA_PROPERTIES_NAMES;
+    }
+
+    public static Map<String, String> getKafkaPropertiesDefaults() {
+        return KAFKA_PROPERTIES_DEFAULTS;
+    }
+
 	public KafkaConsumerMeta() {
 		super();
 	}
@@ -71,19 +95,21 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		return kafkaProperties;
 	}
 
-	public Map<String, String> getKafkaPropertiesMap() {
-		return (Map)getKafkaProperties();
-	}
+    @SuppressWarnings("unused")
+    public Map getKafkaPropertiesMap() {
+        return getKafkaProperties();
+    }
 
 	public void setKafkaProperties(Properties kafkaProperties) {
 		this.kafkaProperties = kafkaProperties;
 	}
 
-	public void setKafkaPropertiesMap(Map<String, String> propertiesMap) {
-		Properties props = new Properties();
-		props.putAll(propertiesMap);
-		setKafkaProperties(props);
-	}
+    @SuppressWarnings("unused")
+    public void setKafkaPropertiesMap(Map<String, String> propertiesMap) {
+        Properties props = new Properties();
+        props.putAll(propertiesMap);
+        setKafkaProperties(props);
+    }
 
 	/**
 	 * @return Kafka topic name
@@ -178,8 +204,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	}
 
 	public void check(List<CheckResultInterface> remarks, TransMeta transMeta, StepMeta stepMeta, RowMetaInterface prev,
-			String input[], String output[], RowMetaInterface info, VariableSpace space, Repository repository,
-					  IMetaStore metaStore) {
+                      String[] input, String[] output, RowMetaInterface info, VariableSpace space, Repository repository,
+                      IMetaStore metaStore) {
 
 		if (topic == null) {
 			remarks.add(new CheckResult(CheckResultInterface.TYPE_RESULT_ERROR,
@@ -201,8 +227,8 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	}
 
 	public StepInterface getStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int cnr, TransMeta transMeta,
-			Trans trans) {
-		return new KafkaConsumer(stepMeta, stepDataInterface, cnr, transMeta, trans);
+                                 Trans trans) {
+        return new KafkaConsumer(stepMeta, stepDataInterface, cnr, transMeta, trans);
 	}
 
 	public StepDataInterface getStepData() {
@@ -214,16 +240,16 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 			throws KettleXMLException {
 
 		try {
-			topic = XMLHandler.getTagValue(stepnode, "TOPIC");
-			field = XMLHandler.getTagValue(stepnode, "FIELD");
-			keyField = XMLHandler.getTagValue(stepnode, "KEY_FIELD");
-			limit = XMLHandler.getTagValue(stepnode, "LIMIT");
-			timeout = XMLHandler.getTagValue(stepnode, "TIMEOUT");
-			// This tag only exists if the value is "true", so we can directly
+            topic = XMLHandler.getTagValue(stepnode, ATTR_TOPIC);
+            field = XMLHandler.getTagValue(stepnode, ATTR_FIELD);
+            keyField = XMLHandler.getTagValue(stepnode, ATTR_KEY_FIELD);
+            limit = XMLHandler.getTagValue(stepnode, ATTR_LIMIT);
+            timeout = XMLHandler.getTagValue(stepnode, ATTR_TIMEOUT);
+            // This tag only exists if the value is "true", so we can directly
 			// populate the field
-			stopOnEmptyTopic = XMLHandler.getTagValue(stepnode, "STOPONEMPTYTOPIC") != null;
-			Node kafkaNode = XMLHandler.getSubNode(stepnode, "KAFKA");
-			String[] kafkaElements = XMLHandler.getNodeElements(kafkaNode);
+            stopOnEmptyTopic = XMLHandler.getTagValue(stepnode, ATTR_STOP_ON_EMPTY_TOPIC) != null;
+            Node kafkaNode = XMLHandler.getSubNode(stepnode, ATTR_KAFKA);
+            String[] kafkaElements = XMLHandler.getNodeElements(kafkaNode);
 			if (kafkaElements != null) {
 				for (String propName : kafkaElements) {
 					String value = XMLHandler.getTagValue(kafkaNode, propName);
@@ -241,46 +267,46 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	public String getXML() throws KettleException {
 		StringBuilder retval = new StringBuilder();
 		if (topic != null) {
-			retval.append("    ").append(XMLHandler.addTagValue("TOPIC", topic));
-		}
+            retval.append("    ").append(XMLHandler.addTagValue(ATTR_TOPIC, topic));
+        }
 		if (field != null) {
-			retval.append("    ").append(XMLHandler.addTagValue("FIELD", field));
-		}
+            retval.append("    ").append(XMLHandler.addTagValue(ATTR_FIELD, field));
+        }
 		if (keyField != null) {
-			retval.append("    ").append(XMLHandler.addTagValue("KEY_FIELD", keyField));
-		}
+            retval.append("    ").append(XMLHandler.addTagValue(ATTR_KEY_FIELD, keyField));
+        }
 		if (limit != null) {
-			retval.append("    ").append(XMLHandler.addTagValue("LIMIT", limit));
-		}
+            retval.append("    ").append(XMLHandler.addTagValue(ATTR_LIMIT, limit));
+        }
 		if (timeout != null) {
-			retval.append("    ").append(XMLHandler.addTagValue("TIMEOUT", timeout));
-		}
+            retval.append("    ").append(XMLHandler.addTagValue(ATTR_TIMEOUT, timeout));
+        }
 		if (stopOnEmptyTopic) {
-			retval.append("    ").append(XMLHandler.addTagValue("STOPONEMPTYTOPIC", "true"));
-		}
-		retval.append("    ").append(XMLHandler.openTag("KAFKA")).append(Const.CR);
-		for (String name : kafkaProperties.stringPropertyNames()) {
+            retval.append("    ").append(XMLHandler.addTagValue(ATTR_STOP_ON_EMPTY_TOPIC, "true"));
+        }
+        retval.append("    ").append(XMLHandler.openTag(ATTR_KAFKA)).append(Const.CR);
+        for (String name : kafkaProperties.stringPropertyNames()) {
 			String value = kafkaProperties.getProperty(name);
 			if (value != null) {
-				retval.append("      " + XMLHandler.addTagValue(name, value));
-			}
+                retval.append("      ").append(XMLHandler.addTagValue(name, value));
+            }
 		}
-		retval.append("    ").append(XMLHandler.closeTag("KAFKA")).append(Const.CR);
-		return retval.toString();
+        retval.append("    ").append(XMLHandler.closeTag(ATTR_KAFKA)).append(Const.CR);
+        return retval.toString();
 	}
 
 	@Override
 	public void readRep(Repository rep, IMetaStore metaStore, ObjectId stepId, List<DatabaseMeta> databases)
 			throws KettleException {
 		try {
-			topic = rep.getStepAttributeString(stepId, "TOPIC");
-			field = rep.getStepAttributeString(stepId, "FIELD");
-			keyField = rep.getStepAttributeString(stepId, "KEY_FIELD");
-			limit = rep.getStepAttributeString(stepId, "LIMIT");
-			timeout = rep.getStepAttributeString(stepId, "TIMEOUT");
-			stopOnEmptyTopic = rep.getStepAttributeBoolean(stepId, "STOPONEMPTYTOPIC");
-			String kafkaPropsXML = rep.getStepAttributeString(stepId, "KAFKA");
-			if (kafkaPropsXML != null) {
+            topic = rep.getStepAttributeString(stepId, ATTR_TOPIC);
+            field = rep.getStepAttributeString(stepId, ATTR_FIELD);
+            keyField = rep.getStepAttributeString(stepId, ATTR_KEY_FIELD);
+            limit = rep.getStepAttributeString(stepId, ATTR_LIMIT);
+            timeout = rep.getStepAttributeString(stepId, ATTR_TIMEOUT);
+            stopOnEmptyTopic = rep.getStepAttributeBoolean(stepId, ATTR_STOP_ON_EMPTY_TOPIC);
+            String kafkaPropsXML = rep.getStepAttributeString(stepId, ATTR_KAFKA);
+            if (kafkaPropsXML != null) {
 				kafkaProperties.loadFromXML(new ByteArrayInputStream(kafkaPropsXML.getBytes()));
 			}
 			// Support old versions:
@@ -299,26 +325,26 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	public void saveRep(Repository rep, IMetaStore metaStore, ObjectId transformationId, ObjectId stepId) throws KettleException {
 		try {
 			if (topic != null) {
-				rep.saveStepAttribute(transformationId, stepId, "TOPIC", topic);
-			}
+                rep.saveStepAttribute(transformationId, stepId, ATTR_TOPIC, topic);
+            }
 			if (field != null) {
-				rep.saveStepAttribute(transformationId, stepId, "FIELD", field);
-			}
+                rep.saveStepAttribute(transformationId, stepId, ATTR_FIELD, field);
+            }
 			if (keyField != null) {
-				rep.saveStepAttribute(transformationId, stepId, "KEY_FIELD", keyField);
-			}
+                rep.saveStepAttribute(transformationId, stepId, ATTR_KEY_FIELD, keyField);
+            }
 			if (limit != null) {
-				rep.saveStepAttribute(transformationId, stepId, "LIMIT", limit);
-			}
+                rep.saveStepAttribute(transformationId, stepId, ATTR_LIMIT, limit);
+            }
 			if (timeout != null) {
-				rep.saveStepAttribute(transformationId, stepId, "TIMEOUT", timeout);
-			}
-			rep.saveStepAttribute(transformationId, stepId, "STOPONEMPTYTOPIC", stopOnEmptyTopic);
+                rep.saveStepAttribute(transformationId, stepId, ATTR_TIMEOUT, timeout);
+            }
+            rep.saveStepAttribute(transformationId, stepId, ATTR_STOP_ON_EMPTY_TOPIC, stopOnEmptyTopic);
 
 			ByteArrayOutputStream buf = new ByteArrayOutputStream();
 			kafkaProperties.storeToXML(buf, null);
-			rep.saveStepAttribute(transformationId, stepId, "KAFKA", buf.toString());
-		} catch (Exception e) {
+            rep.saveStepAttribute(transformationId, stepId, ATTR_KAFKA, buf.toString());
+        } catch (Exception e) {
 			throw new KettleException("KafkaConsumerMeta.Exception.saveRep", e);
 		}
 	}
@@ -333,13 +359,19 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 	public void getFields(RowMetaInterface rowMeta, String origin, RowMetaInterface[] info, StepMeta nextStep,
 						  VariableSpace space, Repository repository, IMetaStore metaStore) throws KettleStepException {
 
-		ValueMetaInterface fieldValueMeta = new ValueMeta(getField(), ValueMetaInterface.TYPE_BINARY);
-		fieldValueMeta.setOrigin(origin);
-		rowMeta.addValueMeta(fieldValueMeta);
+        try {
+            ValueMetaInterface fieldValueMeta = ValueMetaFactory.createValueMeta(getField(), ValueMetaInterface.TYPE_BINARY);
+            fieldValueMeta.setOrigin(origin);
+            rowMeta.addValueMeta(fieldValueMeta);
 
-		ValueMetaInterface keyFieldValueMeta = new ValueMeta(getKeyField(), ValueMetaInterface.TYPE_BINARY);
-		keyFieldValueMeta.setOrigin(origin);
-		rowMeta.addValueMeta(keyFieldValueMeta);
+            ValueMetaInterface keyFieldValueMeta = ValueMetaFactory.createValueMeta(getKeyField(), ValueMetaInterface.TYPE_BINARY);
+            keyFieldValueMeta.setOrigin(origin);
+            rowMeta.addValueMeta(keyFieldValueMeta);
+
+        } catch (KettlePluginException e) {
+            throw new KettleStepException("KafkaConsumerMeta.Exception.getFields", e);
+        }
+
 	}
 
 	public static boolean isEmpty(String str) {
