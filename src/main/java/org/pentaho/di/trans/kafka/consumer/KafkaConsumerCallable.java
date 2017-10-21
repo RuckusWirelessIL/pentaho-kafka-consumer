@@ -1,11 +1,10 @@
 package org.pentaho.di.trans.kafka.consumer;
 
-import java.util.concurrent.Callable;
-
-import org.pentaho.di.core.exception.KettleException;
-
 import kafka.consumer.ConsumerTimeoutException;
 import kafka.message.MessageAndMetadata;
+import org.pentaho.di.core.exception.KettleException;
+
+import java.util.concurrent.Callable;
 
 /**
  * Kafka reader callable
@@ -39,12 +38,8 @@ public abstract class KafkaConsumerCallable implements Callable<Object> {
 			long limit;
 			String strData = meta.getLimit();
 
-			try {
-				limit = KafkaConsumerMeta.isEmpty(strData) ? 0 : Long.parseLong(step.environmentSubstitute(strData));
-			} catch (NumberFormatException e) {
-				throw new KettleException("Unable to parse messages limit parameter", e);
-			}
-			if (limit > 0) {
+            limit = getLimit(strData);
+            if (limit > 0) {
 				step.logDebug("Collecting up to " + limit + " messages");
 			} else {
 				step.logDebug("Collecting unlimited messages");
@@ -67,4 +62,14 @@ public abstract class KafkaConsumerCallable implements Callable<Object> {
 		step.setOutputDone();
 		return null;
 	}
+
+    private long getLimit(String strData) throws KettleException {
+        long limit;
+        try {
+            limit = KafkaConsumerMeta.isEmpty(strData) ? 0 : Long.parseLong(step.environmentSubstitute(strData));
+        } catch (NumberFormatException e) {
+            throw new KettleException("Unable to parse messages limit parameter", e);
+        }
+        return limit;
+    }
 }
