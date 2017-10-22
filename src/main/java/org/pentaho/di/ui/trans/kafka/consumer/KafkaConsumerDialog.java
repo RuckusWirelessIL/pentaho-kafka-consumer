@@ -1,31 +1,16 @@
 package org.pentaho.di.ui.trans.kafka.consumer;
 
-import java.util.Arrays;
-import java.util.Properties;
-import java.util.TreeSet;
-
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.ShellAdapter;
-import org.eclipse.swt.events.ShellEvent;
+import org.eclipse.swt.events.*;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
-import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Event;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Listener;
-import org.eclipse.swt.widgets.Shell;
-import org.eclipse.swt.widgets.TableItem;
-import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.*;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
+import org.pentaho.di.trans.kafka.consumer.KafkaConsumerMeta;
+import org.pentaho.di.trans.kafka.consumer.Messages;
 import org.pentaho.di.trans.step.BaseStepMeta;
 import org.pentaho.di.trans.step.StepDialogInterface;
 import org.pentaho.di.ui.core.widget.ColumnInfo;
@@ -33,8 +18,9 @@ import org.pentaho.di.ui.core.widget.TableView;
 import org.pentaho.di.ui.core.widget.TextVar;
 import org.pentaho.di.ui.trans.step.BaseStepDialog;
 
-import org.pentaho.di.trans.kafka.consumer.KafkaConsumerMeta;
-import org.pentaho.di.trans.kafka.consumer.Messages;
+import java.util.Arrays;
+import java.util.Properties;
+import java.util.TreeSet;
 
 /**
  * UI for the Kafka Consumer step
@@ -310,7 +296,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 		wStopOnEmptyTopic.setSelection(consumerMeta.isStopOnEmptyTopic());
 
 		TreeSet<String> propNames = new TreeSet<String>();
-		propNames.addAll(Arrays.asList(KafkaConsumerMeta.KAFKA_PROPERTIES_NAMES));
+		propNames.addAll(Arrays.asList(KafkaConsumerMeta.getKafkaPropertiesNames()));
 		propNames.addAll(consumerMeta.getKafkaProperties().stringPropertyNames());
 
 		Properties kafkaProperties = consumerMeta.getKafkaProperties();
@@ -320,7 +306,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
 			TableItem item = new TableItem(wProps.table, i++ > 1 ? SWT.BOLD : SWT.NONE);
 			int colnr = 1;
 			item.setText(colnr++, Const.NVL(propName, ""));
-			String defaultValue = KafkaConsumerMeta.KAFKA_PROPERTIES_DEFAULTS.get(propName);
+			String defaultValue = KafkaConsumerMeta.getKafkaPropertiesDefaults().get(propName);
 			if (defaultValue == null) {
 				defaultValue = "(default)";
 			}
