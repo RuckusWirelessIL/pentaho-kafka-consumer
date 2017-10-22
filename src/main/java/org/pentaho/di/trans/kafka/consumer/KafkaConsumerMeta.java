@@ -226,10 +226,10 @@ public class KafkaConsumerMeta extends BaseStepMeta implements StepMetaInterface
 		}
 	}
 
-	public StepInterface getStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int cnr, TransMeta transMeta,
+    public StepInterface getStep(StepMeta stepMeta, StepDataInterface stepDataInterface, int cnr, TransMeta transMeta,
                                  Trans trans) {
         return new KafkaConsumer(stepMeta, stepDataInterface, cnr, transMeta, trans);
-	}
+    }
 
 	public StepDataInterface getStepData() {
 		return new KafkaConsumerData();
