@@ -23,62 +23,62 @@ import java.util.concurrent.*;
  * @author Michael Spector
  */
 public class KafkaConsumer extends BaseStep implements StepInterface {
-	public static final String CONSUMER_TIMEOUT_KEY = "consumer.timeout.ms";
+    public static final String CONSUMER_TIMEOUT_KEY = "consumer.timeout.ms";
 
-	public KafkaConsumer(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
-			Trans trans) {
-		super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
-	}
+    public KafkaConsumer(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
+                         Trans trans) {
+        super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
+    }
 
-	public boolean init(StepMetaInterface smi, StepDataInterface sdi) {
-		super.init(smi, sdi);
+    public boolean init(StepMetaInterface smi, StepDataInterface sdi) {
+        super.init(smi, sdi);
 
-		KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
-		KafkaConsumerData data = (KafkaConsumerData) sdi;
+        KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
+        KafkaConsumerData data = (KafkaConsumerData) sdi;
 
-		Properties properties = meta.getKafkaProperties();
-		Properties substProperties = new Properties();
-		for (Entry<Object, Object> e : properties.entrySet()) {
-			substProperties.put(e.getKey(), environmentSubstitute(e.getValue().toString()));
-		}
-		if (meta.isStopOnEmptyTopic()) {
+        Properties properties = meta.getKafkaProperties();
+        Properties substProperties = new Properties();
+        for (Entry<Object, Object> e : properties.entrySet()) {
+            substProperties.put(e.getKey(), environmentSubstitute(e.getValue().toString()));
+        }
+        if (meta.isStopOnEmptyTopic()) {
 
-			// If there isn't already a provided value, set a default of 1s
-			if (!substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
-				substProperties.put(CONSUMER_TIMEOUT_KEY, "1000");
-			}
-		} else {
-			if (substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
-				logError(Messages.getString("KafkaConsumer.WarnConsumerTimeout"));
-			}
-		}
-		ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
+            // If there isn't already a provided value, set a default of 1s
+            if (!substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
+                substProperties.put(CONSUMER_TIMEOUT_KEY, "1000");
+            }
+        } else {
+            if (substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
+                logError(Messages.getString("KafkaConsumer.WarnConsumerTimeout"));
+            }
+        }
+        ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
 
-		logBasic(Messages.getString("KafkaConsumer.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
-		data.consumer = Consumer.createJavaConsumerConnector(consumerConfig);
-		Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-		String topic = environmentSubstitute(meta.getTopic());
-		topicCountMap.put(topic, 1);
-		Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap = data.consumer.createMessageStreams(topicCountMap);
-		logDebug("Received streams map: " + streamsMap);
-		data.streamIterator = streamsMap.get(topic).get(0).iterator();
+        logBasic(Messages.getString("KafkaConsumer.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
+        data.consumer = Consumer.createJavaConsumerConnector(consumerConfig);
+        Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
+        String topic = environmentSubstitute(meta.getTopic());
+        topicCountMap.put(topic, 1);
+        Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap = data.consumer.createMessageStreams(topicCountMap);
+        logDebug("Received streams map: " + streamsMap);
+        data.streamIterator = streamsMap.get(topic).get(0).iterator();
 
-		return true;
-	}
+        return true;
+    }
 
-	public void dispose(StepMetaInterface smi, StepDataInterface sdi) {
-		KafkaConsumerData data = (KafkaConsumerData) sdi;
-		if (data.consumer != null) {
-			data.consumer.shutdown();
+    public void dispose(StepMetaInterface smi, StepDataInterface sdi) {
+        KafkaConsumerData data = (KafkaConsumerData) sdi;
+        if (data.consumer != null) {
+            data.consumer.shutdown();
 
-		}
-		super.dispose(smi, sdi);
-	}
+        }
+        super.dispose(smi, sdi);
+    }
 
     public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
         Object[] r = getRow();
         if (r == null) {
-			/*
+            /*
 			 * If we have no input rows, make sure we at least run once to
 			 * produce output rows. This allows us to consume without requiring
 			 * an input step.
@@ -121,7 +121,7 @@ public class KafkaConsumer extends BaseStep implements StepInterface {
             KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data, this) {
                 protected void messageReceived(byte[] key, byte[] message) throws KettleException {
                     Object[] newRow = RowDataUtil.addRowData(inputRow.clone(), data.inputRowMeta.size(),
-                            new Object[] { message, key });
+                            new Object[]{message, key});
                     putRow(data.outputRowMeta, newRow);
 
                     if (isRowLevel()) {
@@ -176,12 +176,12 @@ public class KafkaConsumer extends BaseStep implements StepInterface {
         return timeout;
     }
 
-	public void stopRunning(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
+    public void stopRunning(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
 
-		KafkaConsumerData data = (KafkaConsumerData) sdi;
-		data.consumer.shutdown();
-		data.canceled = true;
+        KafkaConsumerData data = (KafkaConsumerData) sdi;
+        data.consumer.shutdown();
+        data.canceled = true;
 
-		super.stopRunning(smi, sdi);
-	}
+        super.stopRunning(smi, sdi);
+    }
 }

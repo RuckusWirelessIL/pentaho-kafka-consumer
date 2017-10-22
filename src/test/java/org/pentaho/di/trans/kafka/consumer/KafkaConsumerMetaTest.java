@@ -28,15 +28,14 @@ import static org.junit.Assert.*;
 public class KafkaConsumerMetaTest {
 
     @BeforeClass
-    public static void setUpBeforeClass() throws KettleException
-    {
-        KettleEnvironment.init( false );
+    public static void setUpBeforeClass() throws KettleException {
+        KettleEnvironment.init(false);
     }
 
     @Test
     public void testGetStepData() {
         KafkaConsumerMeta m = new KafkaConsumerMeta();
-        assertEquals(KafkaConsumerData.class, m.getStepData().getClass() );
+        assertEquals(KafkaConsumerData.class, m.getStepData().getClass());
     }
 
     @Test
@@ -66,16 +65,16 @@ public class KafkaConsumerMetaTest {
         m.setDefault();
 
         RowMetaInterface rowMeta = new RowMeta();
-        m.getFields( rowMeta, "kafka_consumer", null, null, null, null, null );
+        m.getFields(rowMeta, "kafka_consumer", null, null, null, null, null);
 
         // expect two fields to be added to the row stream
-        assertEquals( 2 ,rowMeta.size());
+        assertEquals(2, rowMeta.size());
 
         // those fields must strings and named as configured
-        assertEquals( ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(0).getType() ); // TODO change to string
-        assertEquals( ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(1).getType() ); // TODO change to string
-        assertEquals( ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(0).getStorageType() );
-        assertEquals( ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(1).getStorageType() );
+        assertEquals(ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(0).getType()); // TODO change to string
+        assertEquals(ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(1).getType()); // TODO change to string
+        assertEquals(ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(0).getStorageType());
+        assertEquals(ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(1).getStorageType());
         // TODO check naming
         //assertEquals( rowMeta.getFieldNames()[0], m.getOutputField() );
     }
@@ -107,8 +106,8 @@ public class KafkaConsumerMetaTest {
                 new HashMap<String, FieldLoadSaveValidator<?>>();
         Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorTypeMap =
                 new HashMap<String, FieldLoadSaveValidator<?>>();
-        fieldLoadSaveValidatorAttributeMap.put( "kafka", new MapLoadSaveValidator<String, String>(
-                new KeyStringLoadSaveValidator(), new StringLoadSaveValidator() ) );
+        fieldLoadSaveValidatorAttributeMap.put("kafka", new MapLoadSaveValidator<String, String>(
+                new KeyStringLoadSaveValidator(), new StringLoadSaveValidator()));
 
         LoadSaveTester tester = new LoadSaveTester(KafkaConsumerMeta.class, attributes, getterMap, setterMap, fieldLoadSaveValidatorAttributeMap, fieldLoadSaveValidatorTypeMap);
 
@@ -121,22 +120,22 @@ public class KafkaConsumerMetaTest {
 
         // Test missing Topic name
         List<CheckResultInterface> checkResults = new ArrayList<CheckResultInterface>();
-        m.check( checkResults, new TransMeta(), new StepMeta(), null, null, null, null, new Variables(), new MemoryRepository(), null );
-        assertFalse( checkResults.isEmpty() );
+        m.check(checkResults, new TransMeta(), new StepMeta(), null, null, null, null, new Variables(), new MemoryRepository(), null);
+        assertFalse(checkResults.isEmpty());
         boolean foundMatch = false;
-        for ( CheckResultInterface result : checkResults ) {
-            if ( result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
-                    && result.getText().equals( BaseMessages.getString( KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidTopic" ) ) ) {
+        for (CheckResultInterface result : checkResults) {
+            if (result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
+                    && result.getText().equals(BaseMessages.getString(KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidTopic"))) {
                 foundMatch = true;
             }
         }
-        assertTrue( "The step checks should fail if input topic is not given", foundMatch );
+        assertTrue("The step checks should fail if input topic is not given", foundMatch);
 
         // Test missing field name
         foundMatch = false;
-        for ( CheckResultInterface result : checkResults ) {
-            if ( result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
-                    && result.getText().equals( BaseMessages.getString( KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidField" ) ) ) {
+        for (CheckResultInterface result : checkResults) {
+            if (result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
+                    && result.getText().equals(BaseMessages.getString(KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidField"))) {
                 foundMatch = true;
             }
         }
@@ -144,9 +143,9 @@ public class KafkaConsumerMetaTest {
 
         // Test missing Key field name
         foundMatch = false;
-        for ( CheckResultInterface result : checkResults ) {
-            if ( result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
-                    && result.getText().equals( BaseMessages.getString( KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidKeyField" ) ) ) {
+        for (CheckResultInterface result : checkResults) {
+            if (result.getType() == CheckResultInterface.TYPE_RESULT_ERROR
+                    && result.getText().equals(BaseMessages.getString(KafkaConsumerMeta.class, "KafkaConsumerMeta.Check.InvalidKeyField"))) {
                 foundMatch = true;
             }
         }
@@ -207,19 +206,19 @@ public class KafkaConsumerMetaTest {
     private class KeyStringLoadSaveValidator extends StringLoadSaveValidator {
         @Override
         public String getTestObject() {
-            return "k"+ UUID.randomUUID().toString();
+            return "k" + UUID.randomUUID().toString();
         }
     }
 
-    private void hasi18nValue( String i18nPackageName, String messageId ) {
+    private void hasi18nValue(String i18nPackageName, String messageId) {
         String fakeId = UUID.randomUUID().toString();
-        String fakeLocalized = BaseMessages.getString( i18nPackageName, fakeId );
-        assertEquals( "The way to identify a missing localization key has changed", "!" + fakeId + "!", fakeLocalized );
+        String fakeLocalized = BaseMessages.getString(i18nPackageName, fakeId);
+        assertEquals("The way to identify a missing localization key has changed", "!" + fakeId + "!", fakeLocalized);
 
         // Real Test
-        String localized = BaseMessages.getString( i18nPackageName, messageId );
+        String localized = BaseMessages.getString(i18nPackageName, messageId);
         assertFalse(Utils.isEmpty(localized));
-        assertNotEquals( "!" + messageId + "!", localized );
+        assertNotEquals("!" + messageId + "!", localized);
     }
 
 }
