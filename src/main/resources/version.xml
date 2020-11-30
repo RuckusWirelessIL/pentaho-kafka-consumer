@@ -1,1 +1,1 @@
-<version branch='TRUNK' buildId='${buildId}'>TRUNK-SNAPSHOT</version>
+<version branch='TRUNK' buildId='${buildId}'>${pom.version}</version>

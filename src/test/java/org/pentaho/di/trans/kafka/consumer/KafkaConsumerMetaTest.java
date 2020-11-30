@@ -21,26 +21,32 @@ import org.pentaho.di.trans.steps.loadsave.validator.FieldLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.MapLoadSaveValidator;
 import org.pentaho.di.trans.steps.loadsave.validator.StringLoadSaveValidator;
 
-import java.util.*;
-
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import static org.junit.Assert.*;
 
-public class KafkaConsumerMetaTest {
-
+public class KafkaConsumerMetaTest
+{
     @BeforeClass
-    public static void setUpBeforeClass() throws KettleException {
+    public static void setUpBeforeClass() throws KettleException
+    {
         KettleEnvironment.init(false);
     }
 
     @Test
-    public void testGetStepData() {
+    public void testGetStepData()
+    {
         KafkaConsumerMeta m = new KafkaConsumerMeta();
         assertEquals(KafkaConsumerData.class, m.getStepData().getClass());
     }
 
     @Test
-    public void testStepAnnotations() {
-
+    public void testStepAnnotations()
+    {
         // PDI Plugin Annotation-based Classloader checks
         Step stepAnnotation = KafkaConsumerMeta.class.getAnnotation(Step.class);
         assertNotNull(stepAnnotation);
@@ -60,7 +66,8 @@ public class KafkaConsumerMetaTest {
     }
 
     @Test
-    public void testDefaults() throws KettleStepException {
+    public void testDefaults() throws KettleStepException
+    {
         KafkaConsumerMeta m = new KafkaConsumerMeta();
         m.setDefault();
 
@@ -71,8 +78,8 @@ public class KafkaConsumerMetaTest {
         assertEquals(2, rowMeta.size());
 
         // those fields must strings and named as configured
-        assertEquals(ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(0).getType()); // TODO change to string
-        assertEquals(ValueMetaInterface.TYPE_BINARY, rowMeta.getValueMeta(1).getType()); // TODO change to string
+        assertEquals(ValueMetaInterface.TYPE_STRING, rowMeta.getValueMeta(0).getType());
+        assertEquals(ValueMetaInterface.TYPE_STRING, rowMeta.getValueMeta(1).getType());
         assertEquals(ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(0).getStorageType());
         assertEquals(ValueMetaInterface.STORAGE_TYPE_NORMAL, rowMeta.getValueMeta(1).getStorageType());
         // TODO check naming
@@ -80,11 +87,11 @@ public class KafkaConsumerMetaTest {
     }
 
     @Test
-    public void testLoadSave() throws KettleException {
-
+    public void testLoadSave() throws KettleException
+    {
         List<String> attributes = Arrays.asList("topic", "field", "keyField", "limit", "timeout", "kafka", "stopOnEmptyTopic");
 
-        Map<String, String> getterMap = new HashMap<String, String>();
+        Map<String, String> getterMap = new HashMap<>();
         getterMap.put("topic", "getTopic");
         getterMap.put("field", "getField");
         getterMap.put("keyField", "getKeyField");
@@ -93,7 +100,7 @@ public class KafkaConsumerMetaTest {
         getterMap.put("kafka", "getKafkaPropertiesMap");
         getterMap.put("stopOnEmptyTopic", "isStopOnEmptyTopic");
 
-        Map<String, String> setterMap = new HashMap<String, String>();
+        Map<String, String> setterMap = new HashMap<>();
         setterMap.put("topic", "setTopic");
         setterMap.put("field", "setField");
         setterMap.put("keyField", "setKeyField");
@@ -102,11 +109,9 @@ public class KafkaConsumerMetaTest {
         setterMap.put("kafka", "setKafkaPropertiesMap");
         setterMap.put("stopOnEmptyTopic", "setStopOnEmptyTopic");
 
-        Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorAttributeMap =
-                new HashMap<String, FieldLoadSaveValidator<?>>();
-        Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorTypeMap =
-                new HashMap<String, FieldLoadSaveValidator<?>>();
-        fieldLoadSaveValidatorAttributeMap.put("kafka", new MapLoadSaveValidator<String, String>(
+        Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorAttributeMap = new HashMap<>();
+        Map<String, FieldLoadSaveValidator<?>> fieldLoadSaveValidatorTypeMap = new HashMap<>();
+        fieldLoadSaveValidatorAttributeMap.put("kafka", new MapLoadSaveValidator<>(
                 new KeyStringLoadSaveValidator(), new StringLoadSaveValidator()));
 
         LoadSaveTester tester = new LoadSaveTester(KafkaConsumerMeta.class, attributes, getterMap, setterMap, fieldLoadSaveValidatorAttributeMap, fieldLoadSaveValidatorTypeMap);
@@ -115,11 +120,12 @@ public class KafkaConsumerMetaTest {
     }
 
     @Test
-    public void testChecksEmpty() {
+    public void testChecksEmpty()
+    {
         KafkaConsumerMeta m = new KafkaConsumerMeta();
 
         // Test missing Topic name
-        List<CheckResultInterface> checkResults = new ArrayList<CheckResultInterface>();
+        List<CheckResultInterface> checkResults = new ArrayList<>();
         m.check(checkResults, new TransMeta(), new StepMeta(), null, null, null, null, new Variables(), new MemoryRepository(), null);
         assertFalse(checkResults.isEmpty());
         boolean foundMatch = false;
@@ -153,14 +159,15 @@ public class KafkaConsumerMetaTest {
     }
 
     @Test
-    public void testChecksNotEmpty() {
+    public void testChecksNotEmpty()
+    {
         KafkaConsumerMeta m = new KafkaConsumerMeta();
         m.setTopic(UUID.randomUUID().toString());
         m.setField(UUID.randomUUID().toString());
         m.setKeyField(UUID.randomUUID().toString());
 
         // Test present Topic name
-        List<CheckResultInterface> checkResults = new ArrayList<CheckResultInterface>();
+        List<CheckResultInterface> checkResults = new ArrayList<>();
         m.check(checkResults, new TransMeta(), new StepMeta(), null, null, null, null, new Variables(), new MemoryRepository(), null);
         assertFalse(checkResults.isEmpty());
         boolean foundMatch = false;
@@ -194,23 +201,19 @@ public class KafkaConsumerMetaTest {
 
     }
 
-    @Test
-    public void testIsEmpty() {
-        assertTrue("isEmpty should return true with empty string", KafkaConsumerMeta.isEmpty(""));
-        assertTrue("isEmpty should return true with null string", KafkaConsumerMeta.isEmpty(null));
-    }
-
     /**
      * Private class to generate alphabetic xml tags
      */
-    private class KeyStringLoadSaveValidator extends StringLoadSaveValidator {
+    private class KeyStringLoadSaveValidator extends StringLoadSaveValidator
+    {
         @Override
         public String getTestObject() {
             return "k" + UUID.randomUUID().toString();
         }
     }
 
-    private void hasi18nValue(String i18nPackageName, String messageId) {
+    private void hasi18nValue(String i18nPackageName, String messageId)
+    {
         String fakeId = UUID.randomUUID().toString();
         String fakeLocalized = BaseMessages.getString(i18nPackageName, fakeId);
         assertEquals("The way to identify a missing localization key has changed", "!" + fakeId + "!", fakeLocalized);

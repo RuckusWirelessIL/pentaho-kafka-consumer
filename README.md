@@ -13,7 +13,7 @@ Apache Kafka consumer step plug-in for Pentaho Kettle.
 
 ### Apache Kafka Compatibility ###
 
-The consumer depends on Apache Kafka 0.8.1.1, which means that the broker must be of 0.8.x version or later.
+The consumer depends on Apache Kafka 1.1.0. Check broker version to ensure compatibility.
 
 If you want to build the plugin for a different Kafka version you have to
 modify the values of kafka.version and kafka.scala.version in the properties

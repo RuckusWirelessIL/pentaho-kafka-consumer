@@ -1,187 +1,209 @@
 package org.pentaho.di.trans.kafka.consumer;
 
-import kafka.consumer.Consumer;
-import kafka.consumer.ConsumerConfig;
-import kafka.consumer.KafkaStream;
+import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.pentaho.di.core.exception.KettleException;
+import org.pentaho.di.core.exception.KettleStepException;
+import org.pentaho.di.core.exception.KettleValueException;
 import org.pentaho.di.core.row.RowDataUtil;
 import org.pentaho.di.core.row.RowMeta;
 import org.pentaho.di.trans.Trans;
 import org.pentaho.di.trans.TransMeta;
-import org.pentaho.di.trans.step.*;
+import org.pentaho.di.trans.step.BaseStep;
+import org.pentaho.di.trans.step.StepDataInterface;
+import org.pentaho.di.trans.step.StepInterface;
+import org.pentaho.di.trans.step.StepMeta;
+import org.pentaho.di.trans.step.StepMetaInterface;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
+import java.util.Collections;
 import java.util.Map.Entry;
 import java.util.Properties;
-import java.util.concurrent.*;
 
 /**
  * Kafka Consumer step processor
  *
  * @author Michael Spector
+ * @author Miguel Ángel García
  */
-public class KafkaConsumer extends BaseStep implements StepInterface {
-    public static final String CONSUMER_TIMEOUT_KEY = "consumer.timeout.ms";
+public class KafkaConsumer extends BaseStep implements StepInterface
+{
+    private KafkaConsumerMeta meta;
+    private KafkaConsumerData data;
 
-    public KafkaConsumer(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta,
-                         Trans trans) {
+
+    /**
+     * Default step constructor.
+     */
+    public KafkaConsumer(StepMeta stepMeta, StepDataInterface stepDataInterface, int copyNr, TransMeta transMeta, Trans trans)
+    {
         super(stepMeta, stepDataInterface, copyNr, transMeta, trans);
     }
 
-    public boolean init(StepMetaInterface smi, StepDataInterface sdi) {
-        super.init(smi, sdi);
 
-        KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
-        KafkaConsumerData data = (KafkaConsumerData) sdi;
-
-        Properties properties = meta.getKafkaProperties();
-        Properties substProperties = new Properties();
-        for (Entry<Object, Object> e : properties.entrySet()) {
-            substProperties.put(e.getKey(), environmentSubstitute(e.getValue().toString()));
-        }
-        if (meta.isStopOnEmptyTopic()) {
-
-            // If there isn't already a provided value, set a default of 1s
-            if (!substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
-                substProperties.put(CONSUMER_TIMEOUT_KEY, "1000");
-            }
-        } else {
-            if (substProperties.containsKey(CONSUMER_TIMEOUT_KEY)) {
-                logError(Messages.getString("KafkaConsumer.WarnConsumerTimeout"));
-            }
-        }
-        ConsumerConfig consumerConfig = new ConsumerConfig(substProperties);
-
-        logBasic(Messages.getString("KafkaConsumer.CreateKafkaConsumer.Message", consumerConfig.zkConnect()));
-        data.consumer = Consumer.createJavaConsumerConnector(consumerConfig);
-        Map<String, Integer> topicCountMap = new HashMap<String, Integer>();
-        String topic = environmentSubstitute(meta.getTopic());
-        topicCountMap.put(topic, 1);
-        Map<String, List<KafkaStream<byte[], byte[]>>> streamsMap = data.consumer.createMessageStreams(topicCountMap);
-        logDebug("Received streams map: " + streamsMap);
-        data.streamIterator = streamsMap.get(topic).get(0).iterator();
-
-        return true;
-    }
-
-    public void dispose(StepMetaInterface smi, StepDataInterface sdi) {
-        KafkaConsumerData data = (KafkaConsumerData) sdi;
+    /**
+     * Finalize step execution.
+     * Close kafka consumer.
+     *
+     * @param  smi  StepMetaInterface
+     * @param  sdi  StepDataInterface
+     */
+    @Override
+    public void dispose(StepMetaInterface smi, StepDataInterface sdi)
+    {
+        this.meta = (KafkaConsumerMeta) smi;
+        this.data = (KafkaConsumerData) sdi;
+        // Close consumer.
         if (data.consumer != null) {
-            data.consumer.shutdown();
-
+            data.consumer.close();
         }
         super.dispose(smi, sdi);
     }
 
-    public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
-        Object[] r = getRow();
-        if (r == null) {
-            /*
-			 * If we have no input rows, make sure we at least run once to
-			 * produce output rows. This allows us to consume without requiring
-			 * an input step.
-			 */
-            if (!first) {
-                setOutputDone();
-                return false;
+    /**
+     * User stops execution.
+     * Close kafka consumer.
+     *
+     * @param  smi              StepMetaInterface
+     * @param  sdi              StepDataInterface
+     * @throws KettleException  When stopRunning fails.
+     */
+    @Override
+    public void stopRunning(StepMetaInterface smi, StepDataInterface sdi) throws KettleException
+    {
+        this.meta = (KafkaConsumerMeta) smi;
+        this.data = (KafkaConsumerData) sdi;
+        // Close kafka consumer.
+        this.data.consumer.close();
+        // Stop step.
+        super.stopRunning(smi, sdi);
+    }
+
+    /**
+     * Init step.
+     * Connect to Kafka and subscribe to a topic.
+     *
+     * @param  smi  Step Meta interface.
+     * @param  sdi  Step Data interface.
+     * @return      True when init is Ok, false when KO.
+     */
+    @Override
+    public boolean init(StepMetaInterface smi, StepDataInterface sdi)
+    {
+        // Basic step init.
+        super.init(smi, sdi);
+        this.meta = (KafkaConsumerMeta) smi;
+        this.data = (KafkaConsumerData) sdi;
+
+        // Parse behaviours vars.
+        String topic = environmentSubstitute(this.meta.getTopic());
+        // Parse config props.
+        Properties parsedProps = new Properties();
+        for (Entry<Object, Object> e : this.meta.getKafkaProperties().entrySet()) {
+            if (!"(default)".equals(e.getValue().toString())) {
+                parsedProps.put(e.getKey(), environmentSubstitute(e.getValue().toString()));
             }
-            r = new Object[0];
-        } else {
-            incrementLinesRead();
         }
 
-        final Object[] inputRow = r;
+        // Create kafka consumer and subscribe to a topic.
+        log.logDebug(parsedProps.toString());
 
-        KafkaConsumerMeta meta = (KafkaConsumerMeta) smi;
-        final KafkaConsumerData data = (KafkaConsumerData) sdi;
+        // Avoid ClassLoader error when loading StringDeserialized.
+        Thread currentThread = Thread.currentThread();
+        ClassLoader savedClassLoader = currentThread.getContextClassLoader();
+        currentThread.setContextClassLoader(org.apache.kafka.clients.consumer.KafkaConsumer.class.getClassLoader());
+        // Create Kafka Consumer.
+        this.data.consumer = new org.apache.kafka.clients.consumer.KafkaConsumer(parsedProps);
+        // Restore ClassLoader context.
+        currentThread.setContextClassLoader(savedClassLoader);
 
-        if (first) {
-            first = false;
-            data.inputRowMeta = getInputRowMeta();
-            // No input rows means we just dummy data
-            if (data.inputRowMeta == null) {
-                data.outputRowMeta = new RowMeta();
-                data.inputRowMeta = new RowMeta();
-            } else {
-                data.outputRowMeta = getInputRowMeta().clone();
-            }
-            meta.getFields(data.outputRowMeta, getStepname(), null, null, this, null, null);
-        }
+        //TestConsumerRebalanceListener rebalanceListener = new TestConsumerRebalanceListener();
+        //data.consumer.subscribe(Collections.singletonList(topic), rebalanceListener);
+        // Subscribe to a topic.
+        this.data.consumer.subscribe(Collections.singletonList(topic));
 
-        try {
-            long timeout;
-            String strData = meta.getTimeout();
+        // Init time and message counters.
+        this.data.totalMessages = 0;
+        this.data.startedOn = Instant.now();
 
-            timeout = getTimeout(strData);
-
-            logDebug("Starting message consumption with overall timeout of " + timeout + "ms");
-
-            KafkaConsumerCallable kafkaConsumer = new KafkaConsumerCallable(meta, data, this) {
-                protected void messageReceived(byte[] key, byte[] message) throws KettleException {
-                    Object[] newRow = RowDataUtil.addRowData(inputRow.clone(), data.inputRowMeta.size(),
-                            new Object[]{message, key});
-                    putRow(data.outputRowMeta, newRow);
-
-                    if (isRowLevel()) {
-                        logRowlevel(Messages.getString("KafkaConsumer.Log.OutputRow",
-                                Long.toString(getLinesWritten()), data.outputRowMeta.getString(newRow)));
-                    }
-                }
-            };
-            if (timeout > 0) {
-                logDebug("Starting timed consumption");
-                ExecutorService executor = Executors.newSingleThreadExecutor();
-                try {
-                    Future<?> future = executor.submit(kafkaConsumer);
-                    executeFuture(timeout, future);
-                } finally {
-                    executor.shutdown();
-                }
-            } else {
-                logDebug("Starting direct consumption");
-                kafkaConsumer.call();
-            }
-        } catch (KettleException e) {
-            if (!getStepMeta().isDoingErrorHandling()) {
-                logError(Messages.getString("KafkaConsumer.ErrorInStepRunning", e.getMessage()));
-                setErrors(1);
-                stopAll();
-                setOutputDone();
-                return false;
-            }
-            putError(getInputRowMeta(), r, 1, e.toString(), null, getStepname());
-        }
+        // Init OK.
         return true;
     }
 
-    private void executeFuture(long timeout, Future<?> future) throws KettleException {
-        try {
-            future.get(timeout, TimeUnit.MILLISECONDS);
-        } catch (TimeoutException e) {
-            logDebug("Timeout exception on the Future");
-        } catch (Exception e) {
-            throw new KettleException(e);
+    /**
+     * Method that will be called in a loop to generate and consume rows.
+     * Kafka consumer does not expect any incoming row from previous steps.
+     * It is designed to execute processRow() exactly once, fetching data from the outside world,
+     * and putting them into the row stream by calling putRow() repeatedly until done.
+     */
+    public boolean processRow(StepMetaInterface smi, StepDataInterface sdi) throws KettleException
+    {
+        this.meta = (KafkaConsumerMeta) smi;
+        this.data = (KafkaConsumerData) sdi;
+
+        // Get the input row. Null on our case.
+        Object[] r = getRow();
+
+        // Row structure only the first time.
+        if (this.first) {
+            this.first = false;
+            this.data.outputRowMeta = new RowMeta();
+            this.meta.getFields(this.data.outputRowMeta, this.getStepname(), null, null, this, this.repository, this.metaStore);
+            // Convert integer and time metas.
+            this.data.maxMessages = Integer.parseInt(environmentSubstitute(this.meta.getLimit()));
+            this.data.maxTime = Long.parseLong(environmentSubstitute(this.meta.getTimeout()));
+            log.logDebug("Max messages set to " + this.data.maxMessages + " and Time Out set to " + this.data.maxTime + " ms.");
         }
-    }
 
-    private long getTimeout(String strData) throws KettleException {
-        long timeout;
-        try {
-            timeout = KafkaConsumerMeta.isEmpty(strData) ? 0 : Long.parseLong(environmentSubstitute(strData));
-        } catch (NumberFormatException e) {
-            throw new KettleException("Unable to parse step timeout value", e);
+        // Poll messages from topic.
+        logDebug("Starting topic polling...");
+        ConsumerRecords<byte[], byte[]> messages = this.data.consumer.poll(10000);
+
+        // If no messages and stop when empty is set, we have finished.
+        if (this.meta.isStopOnEmptyTopic() && messages.count() == 0) {
+            logDebug("No more messages to read.");
+            setOutputDone();
+            return false;
         }
-        return timeout;
+
+        // Output the messages.
+        log.logDebug("Poll " + messages.count() + " messages from topic.");
+        messages.forEach(msg -> {
+            // Create new row.
+            Object[] outputRow = RowDataUtil.allocateRowData(this.data.outputRowMeta.size());
+            outputRow[0] = msg.key();
+            outputRow[1] = msg.value();
+            // Output the row.
+            try {
+                this.putRow(this.data.outputRowMeta, this.data.outputRowMeta.cloneRow(outputRow));
+                log.logRowlevel(Messages.getString("KafkaConsumer.Log.OutputRow", Long.toString(getLinesWritten()), this.data.outputRowMeta.getString(outputRow)));
+            } catch (KettleStepException | KettleValueException e) {
+                e.printStackTrace();
+            }
+        });
+
+        // Update read messages.
+        this.data.totalMessages += messages.count();
+
+        // Check total messages read.
+        if ((this.data.maxMessages > 0) && (this.data.totalMessages >= this.data.maxMessages)) {
+            logDebug("Reached maximum messages to read (" + this.data.totalMessages + ").");
+            setOutputDone();
+            return false;
+        }
+
+        // Check time reading.
+        if ((this.data.maxTime > 0) && (ChronoUnit.MILLIS.between(this.data.startedOn, Instant.now()) > this.data.maxTime)) {
+            logDebug("Reached timeout to read (" + this.data.maxTime + ").");
+            setOutputDone();
+            return false;
+        }
+
+        if (checkFeedback(getLinesRead())) {
+            logBasic("KafkaConsumer.Log.LineNumber - Lines read " + getLinesRead());
+        }
+
+        return true;
     }
 
-    public void stopRunning(StepMetaInterface smi, StepDataInterface sdi) throws KettleException {
-
-        KafkaConsumerData data = (KafkaConsumerData) sdi;
-        data.consumer.shutdown();
-        data.canceled = true;
-
-        super.stopRunning(smi, sdi);
-    }
 }

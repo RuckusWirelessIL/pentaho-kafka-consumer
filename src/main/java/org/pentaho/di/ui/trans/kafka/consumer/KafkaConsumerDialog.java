@@ -1,11 +1,24 @@
 package org.pentaho.di.ui.trans.kafka.consumer;
 
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.*;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.ShellAdapter;
+import org.eclipse.swt.events.ShellEvent;
 import org.eclipse.swt.layout.FormAttachment;
 import org.eclipse.swt.layout.FormData;
 import org.eclipse.swt.layout.FormLayout;
-import org.eclipse.swt.widgets.*;
+import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
+import org.eclipse.swt.widgets.Shell;
+import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.swt.widgets.Text;
 import org.pentaho.di.core.Const;
 import org.pentaho.di.i18n.BaseMessages;
 import org.pentaho.di.trans.TransMeta;
@@ -26,9 +39,10 @@ import java.util.TreeSet;
  * UI for the Kafka Consumer step
  *
  * @author Michael Spector
+ * @author Miguel Ángel García
  */
-public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInterface {
-
+public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInterface
+{
     private KafkaConsumerMeta consumerMeta;
     private TextVar wTopicName;
     private TextVar wFieldName;
@@ -38,22 +52,26 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
     private TextVar wTimeout;
     private Button wStopOnEmptyTopic;
 
-    public KafkaConsumerDialog(Shell parent, Object in, TransMeta tr, String sname) {
+    public KafkaConsumerDialog(Shell parent, Object in, TransMeta tr, String sname)
+    {
         super(parent, (BaseStepMeta) in, tr, sname);
         consumerMeta = (KafkaConsumerMeta) in;
     }
 
-    public KafkaConsumerDialog(Shell parent, BaseStepMeta baseStepMeta, TransMeta transMeta, String stepname) {
+    public KafkaConsumerDialog(Shell parent, BaseStepMeta baseStepMeta, TransMeta transMeta, String stepname)
+    {
         super(parent, baseStepMeta, transMeta, stepname);
         consumerMeta = (KafkaConsumerMeta) baseStepMeta;
     }
 
-    public KafkaConsumerDialog(Shell parent, int nr, BaseStepMeta in, TransMeta tr) {
+    public KafkaConsumerDialog(Shell parent, int nr, BaseStepMeta in, TransMeta tr)
+    {
         super(parent, nr, in, tr);
         consumerMeta = (KafkaConsumerMeta) in;
     }
 
-    public String open() {
+    public String open()
+    {
         Shell parent = getParent();
         Display display = parent.getDisplay();
 
@@ -284,7 +302,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
     /**
      * Copy information from the meta-data input to the dialog fields.
      */
-    private void getData(KafkaConsumerMeta consumerMeta, boolean copyStepname) {
+    private void getData(KafkaConsumerMeta consumerMeta, boolean copyStepname)
+    {
         if (copyStepname) {
             wStepname.setText(stepname);
         }
@@ -306,10 +325,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
             TableItem item = new TableItem(wProps.table, i++ > 1 ? SWT.BOLD : SWT.NONE);
             int colnr = 1;
             item.setText(colnr++, Const.NVL(propName, ""));
-            String defaultValue = KafkaConsumerMeta.getKafkaPropertiesDefaults().get(propName);
-            if (defaultValue == null) {
-                defaultValue = "(default)";
-            }
+            String defaultValue = KafkaConsumerMeta.defaultProp(propName);
             item.setText(colnr++, Const.NVL(value, defaultValue));
         }
 
@@ -320,7 +336,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
         wStepname.selectAll();
     }
 
-    private void cancel() {
+    private void cancel()
+    {
         stepname = null;
         consumerMeta.setChanged(changed);
         dispose();
@@ -329,7 +346,8 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
     /**
      * Copy information from the dialog fields to the meta-data input
      */
-    private void setData(KafkaConsumerMeta consumerMeta) {
+    private void setData(KafkaConsumerMeta consumerMeta)
+    {
         consumerMeta.setTopic(wTopicName.getText());
         consumerMeta.setField(wFieldName.getText());
         consumerMeta.setKeyField(wKeyFieldName.getText());
@@ -344,7 +362,7 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
             int colnr = 1;
             String name = item.getText(colnr++);
             String value = item.getText(colnr++).trim();
-            if (value.length() > 0 && !"(default)".equals(value)) {
+            if (value.length() > 0) {
                 kafkaProperties.put(name, value);
             } else {
                 kafkaProperties.remove(name);
@@ -357,8 +375,9 @@ public class KafkaConsumerDialog extends BaseStepDialog implements StepDialogInt
         consumerMeta.setChanged();
     }
 
-    private void ok() {
-        if (KafkaConsumerMeta.isEmpty(wStepname.getText())) {
+    private void ok()
+    {
+        if (wStepname.getText() == null || wStepname.getText().length() == 0) {
             return;
         }
         setData(consumerMeta);
